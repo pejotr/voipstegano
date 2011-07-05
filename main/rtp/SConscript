@@ -1,0 +1,24 @@
+# Command line arguments parsing
+cppdefines = []
+for key, value in ARGLIST:
+    if key == 'define' and value == 'SEND':
+        print " ==> Building SENDER"
+        cppdefines.append(value)
+    else :
+        cppdefines.append('RECV');
+
+dbg = Environment(CC = 'g++', CCFLAGS = '-ggdb', CPPDEFINES = cppdefines)
+
+dbg.Append(CPPPATH = ['../../include/', '/usr/local/include/'])
+dbg.ParseConfig('xml2-config --cflags --libs')
+dbg.ParseConfig('pkg-config --libs libpjproject')
+dbg.ParseConfig('pkg-config --cflags --libs sigc++-2.0')
+
+sources = Split("""
+    rtp.cxx
+    send.cxx
+    recv.cxx
+	mgr.cxx
+""")
+
+object_list = dbg.Object(source = sources)

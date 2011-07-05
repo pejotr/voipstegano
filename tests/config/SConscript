@@ -1,0 +1,11 @@
+env = Environment(CC = 'g++', CCFLAGS = '-ggdb')
+
+env.Append(CPPPATH = ['../../include/'])
+env.ParseConfig('xml2-config --cflags --libs')
+
+object_list = env.Object(source = ['config_test.c'])
+object_list.append('../../build/config.o')
+object_list.append('../../build/logger.o')
+object_list.append('../../build/terminal.o')
+
+env.Program(target='exe_config_test', source = object_list)

@@ -1,0 +1,8 @@
+env = Environment(CC = 'g++')
+
+env.Append(CPPPATH = ['../../include/'])
+
+object_list = env.Object(source = ['net_test.c'])
+object_list.append('../../build/net.o')
+
+env.Program(target='exe_net_test', source = object_list)

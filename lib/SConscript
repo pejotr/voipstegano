@@ -1,0 +1,9 @@
+env = Environment(CC = 'g++', CCFLAGS = '-ggdb')
+
+env.Append(CPPPATH = ['../../include/md5'])
+
+sources = Split("""
+    md5/md5.c
+""")
+
+object_list = env.Object(source = sources)

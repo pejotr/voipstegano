@@ -1,0 +1,9 @@
+env = Environment(CC = 'g++', CCFLAGS = '-ggdb')
+
+env.Append(CPPPATH = ['../../include/'])
+
+object_list = env.Object(source = ['log_test.c'])
+object_list.append('../../build/terminal.o')
+object_list.append('../../build/logger.o')
+
+env.Program(target='exe_logger_test', source = object_list)
