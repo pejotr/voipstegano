@@ -1,6 +1,6 @@
 /* vim: set expandtab tabstop=4 softtabstop=4 shiftwidth=4:  */
 /*
- * Copyright (C) 2010  Piotr Doniec, Warsaw University of Technology
+ * Copyright (C) 2011  Piotr Doniec, Warsaw University of Technology
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,25 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "voipsteg/config.h"
-#include "voipsteg/algo/interface.hpp"
 
-IAlgorithm::IAlgorithm()
-{
-}
+#ifndef _VOIPSTEG_ALGO_DOUBLE_
+#define _VOIPSTEG_ALGO_DOUBLE_
 
-int IAlgorithm::pick_bit()
-{
-}
+extern algo_desc_t doublealgo;
 
-void IAlgorithm::pop_bit()
-{
-}
+int algo_double_encode(char *data, int byteNum, unsigned char **pszOut);
+int algo_double_decoder(char *data, unsigned char **pszOut);
 
-void IAlgorithm::put_bit(int bitval)
-{
-}
-
-int IAlgorithm::write_chunk()
-{
-}
+#endif /* _VOIPSTEG_ALGO_DOUBLE_ */

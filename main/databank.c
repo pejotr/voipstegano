@@ -61,11 +61,6 @@ int db_init_data()
                 _byteNum = 0;
                 _bitNum  = 7;
                 free(fileData);
-
-//                for( i = 0; i < _byteNumMax; ++i )
-//                {
-//                    SYS_LOG(E_WARNING, "BYTE %d = %x", i, gsData[i]);
-//                }
             }
             else
             {
