@@ -1,0 +1,18 @@
+# Command line arguments parsing
+cppdefines = []
+for key, value in ARGLIST:
+    if key == 'define' and value == 'SEND':
+        print " ==> Building SENDER"
+        cppdefines.append(value)
+    else :
+        cppdefines.append('RECV');
+
+dbg = Environment(CC = 'g++', CCFLAGS = '-ggdb', CPPDEFINES = cppdefines)
+
+dbg.Append(CPPPATH = ['../../include/', '/usr/local/include/'])
+
+sources = Split("""
+	double.c
+""")
+
+object_list = dbg.Object(source = sources)

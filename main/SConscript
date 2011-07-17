@@ -33,7 +33,7 @@ dbg.Object(source = sources)
 
 # Run build in subdirectories
 path = "../main"
-dir_list = ['rtp', 'sip']
+dir_list = ['rtp', 'sip', 'algo']
 
 for dir in dir_list:
     sconscript_path = os.path.join(path, dir)

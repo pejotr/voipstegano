@@ -20,9 +20,19 @@
 #ifndef _VOIPSTEG_ALGO_DOUBLE_
 #define _VOIPSTEG_ALGO_DOUBLE_
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
+#include "voipsteg/algo/interface.hxx"
+
 extern algo_desc_t doublealgo;
 
-int algo_double_encode(char *data, int byteNum, unsigned char **pszOut);
+void algo_double_init();
+int algo_double_encoder(char *data, int byteNum, unsigned char **pszOut);
 int algo_double_decoder(char *data, unsigned char **pszOut);
 
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
 #endif /* _VOIPSTEG_ALGO_DOUBLE_ */

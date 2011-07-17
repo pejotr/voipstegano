@@ -15,13 +15,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "voipsteg/algo/interface.hxx"
+#include "voipsteg/algo/double.hxx"
 
 algo_desc_t doublealgo;
-doublealgo.encoder = algo_double_encode;
-doublealgo.decoder = algo_double_decoder;
 
-int algo_double_encode(char *data, int byteNum, unsigned char **pszOut)
+void algo_double_init()
+{
+    doublealgo.encoder = algo_double_encoder;
+    doublealgo.decoder = algo_double_decoder;
+}
+
+int algo_double_encoder(char *data, int byteNum, unsigned char **pszOut)
 {
     int i, j, k;
     unsigned short m = 0, bit;
@@ -55,30 +64,46 @@ int algo_double_encode(char *data, int byteNum, unsigned char **pszOut)
 
 int algo_double_decoder(char *data, unsigned char **pszOut)
 {
-    int i;
-    unsigned short mask = 0x8000;
-    unsigned short tmask = 0x4000;
-    short *value = (short*)data;
-    unsigned char *pPtr; 
+    int i, j;
+    unsigned char mask = 0x80;
+    unsigned char tmask = 0x40;
+    unsigned char *pPtr, p1 = 0x00, p2 = 0x00, r;
+    unsigned short v1, v2;
+    unsigned char value = data[0];
 
-    pszOut = (unsigned char*)calloc(1, sizeof(unsigned char));
-    pPtr = *pszOut;
+    *pszOut = (unsigned char*)calloc(1, sizeof(unsigned char));
+    //pPtr = *pszOut;
+    pPtr = &p1;
 
-    for( i = 0; i < 8; i++)
+    for( j = 0; j < 2; j++ )
     {
-        if(value & mask == value & tmask)
+        for( i = 0; i < 4; i++ )
         {
-            *(pPtr++) |= (value & mask);
-            mask =>> 2;
-            tmask =>> 2;
+            v1 = (value & mask) ;
+            v2 = (value & tmask);
+
+            if( v1 == (v2  << 1) )
+            {
+                *(pPtr) |= (value & mask) << i ;
+                mask >>= 2;
+                tmask >>= 2;
+            }
+            else
+            {
+                *(pPtr) |= (value & mask) >> (8+i);
+                mask >>= 1;
+                tmask >>= 1;
+            } 
         }
-        else
-        {
-            *(pPtr++) |= (value & mask);
-            mask =>> 1;
-            tmask =>> 1;
-        } 
+    
+        value = data[1];
+        mask = 0x80;
+        tmask = 0x40;
+        pPtr = &p2;
     }
+
+    r = p1 | (p2 >> 4);
+    memcpy(*pszOut, &r, 1); 
 
     return 1;
 }
