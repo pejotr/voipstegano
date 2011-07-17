@@ -72,7 +72,6 @@ int algo_double_decoder(char *data, unsigned char **pszOut)
     unsigned char value = data[0];
 
     *pszOut = (unsigned char*)calloc(1, sizeof(unsigned char));
-    //pPtr = *pszOut;
     pPtr = &p1;
 
     for( j = 0; j < 2; j++ )
@@ -82,15 +81,15 @@ int algo_double_decoder(char *data, unsigned char **pszOut)
             v1 = (value & mask) ;
             v2 = (value & tmask);
 
+            *(pPtr) |= (value & mask)  << i;
+
             if( v1 == (v2  << 1) )
             {
-                *(pPtr) |= (value & mask) << i ;
                 mask >>= 2;
                 tmask >>= 2;
             }
             else
             {
-                *(pPtr) |= (value & mask) >> (8+i);
                 mask >>= 1;
                 tmask >>= 1;
             } 
