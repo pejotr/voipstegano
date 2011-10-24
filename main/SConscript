@@ -20,6 +20,7 @@ dbg.ParseConfig('xml2-config --cflags --libs')
 dbg.ParseConfig('pkg-config --libs libpjproject')
 
 sources = Split("""
+    activelogger.cxx
     logger.c
     config.c
     net.c

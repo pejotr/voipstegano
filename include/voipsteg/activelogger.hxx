@@ -19,34 +19,38 @@
 #ifndef _VOIPSTEG_ACTIVELOGGER_
 #define _VOIPSTEG_ACTIVELOGGER_
 
+
 #include "voipsteg/logger.h"
+#include <string>
 
 namespace activelogger {
 
+    #define APP_LOG(LEVEL, FORMAT, ...) activelogger::put((LEVEL), __LINE__, __FILE__, FORMAT, ##__VA_ARGS__);
+
     //! Module logger reperesentation
     typedef struct activelogger_logger {
-	std::sstream stream;
+	//std::sstream stream;
 	std::string  module;
     } activelogger_t;
 
     //! Event information used by logger to create log message
     typedef struct activelogger_message {	
-	enum LOGLEVEL level;
-	std::string   module,
-	              message,
-	              file;
-	int           line;
-	time_t        time;
+	enum LOG_LEVEL level;
+	std::string    module,
+	               message,
+	               file;
+	int            line;
+	clock_t        time;
     } message_t;
 
     //! Initialize activelogger functionality
     /*!
         This function starts separate thread just to handle messegaes put
-	put into the queue by module loggers. Because printing out infos is 
+	put into the queue by module loggers. Because printing out infosx is 
 	done in separated thread, the main routines are not weight down 
 	by additional operations. Simplified implmentation of ActiveObject.
     */
-    void* init(void* pParams);
+    pthread_t* init(void* pParams);
 
     //! Creates and register activelogger for submodule
     activelogger_t* create_logger(const std::string& modulename);

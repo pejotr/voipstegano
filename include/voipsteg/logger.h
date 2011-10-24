@@ -11,8 +11,8 @@ extern "C" {
 #include <stdarg.h>
 #include "voipsteg/terminal.h"
 
-#define SYS_LOG(LEVEL, FORMAT, ...) vslog_log((LEVEL), __LINE__, __FILE__, FORMAT, ##__VA_ARGS__);
-#define NEVER_GET_HERE() vslog_log(E_ERROR, __LINE__, __FILE__, "Undefined behaviour")
+#define SYS_LOG(LEVEL, FORMAT, ...) vslog_log((LEVEL), __LINE__, __FILE__, 0.0, FORMAT, ##__VA_ARGS__);
+#define NEVER_GET_HERE() vslog_log(E_ERROR, __LINE__, __FILE__, 0.0, "Undefined behaviour")
 
 enum LOG_LEVEL { 
     E_ALL       ,
@@ -35,7 +35,7 @@ typedef struct {
 //! Set minimal message level to be logged
 void vslog_set_level(int l);
 
-void vslog_log(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...);
+void vslog_log(enum LOG_LEVEL lev, int lineno, const char *file, double milis, const char *format, ...);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

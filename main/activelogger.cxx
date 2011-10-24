@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <pthread.h>
@@ -32,7 +33,7 @@ namespace activelogger {
 namespace {
 
 //! Stores already created module  loggers
-std::map<std::string, activelogger_t*> mRCreatedLoggers;
+std::map<std::string, activelogger_t*> mCreatedLoggers;
 
 //! Messages awaiting to be printed
 std::list<message_t> mMessageQueue;
@@ -78,7 +79,7 @@ pthread_t* init(void* pParams)
 activelogger_t* create_logger(const std::string& modulename)
 {
     std::map<std::string, activelogger_t*>::iterator i;
-    activelogger* logger;
+    activelogger_t* logger;
 
     i = mCreatedLoggers.find(modulename);
 
@@ -86,11 +87,11 @@ activelogger_t* create_logger(const std::string& modulename)
 	logger = new activelogger_t;
 	logger->module = modulename;
 
-	mCreatedLogger[modulename] = logger;
+	mCreatedLoggers[modulename] = logger;
 	return logger;
     }
 
-    return *i;
+    return i->second;
 }
 
 void put(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...)
@@ -105,11 +106,11 @@ void put(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...)
     message.message = log;
     message.file    = file;
     message.line    = lineno;
-    message.time    = time(NULL);
+    message.time    = clock();
 
-    pthread_mutex_lock(&mSyncQueue);
-        mMessageQueue.push(message);
-    pthread_mutex_unlock(&mSyncQueue);
+    pthread_mutex_lock(&mQueueSync);
+        mMessageQueue.push_back(message);
+    pthread_mutex_unlock(&mQueueSync);
 }
 
 namespace {
@@ -117,22 +118,24 @@ namespace {
     void* main_loop(void* pParams)
     {
 	message_t msg;
+	double milis;
 
 	while(mRun) 
 	{
-	    pthread_mutex_lock(&mSyncQueue);
+	    pthread_mutex_lock(&mQueueSync);
 
 	    if( mMessageQueue.size() == 0  )
 	    {
 		pthread_cond_wait(&mQueueNotEmpty, &mQueueSync);
 	    }
 
-	    msg = mSyncQueue.front();
-	    mSyncQueue.pop();
+	    msg = mMessageQueue.front();
+	    mMessageQueue.pop_front();
 
-	    pthread_mutex_unlock(&mSyncQueue);
+	    pthread_mutex_unlock(&mQueueSync);
 
-	    vslog_log(msg.level, msg.line, msg.file, msg.message);
+	    milis = ((double)msg.time / (double)CLOCKS_PER_SEC)*1000;
+	    vslog_log(msg.level, msg.line, msg.file.c_str(), milis, msg.message.c_str());
       	}
     }
 }

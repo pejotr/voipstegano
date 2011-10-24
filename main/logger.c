@@ -22,7 +22,7 @@ void vslog_set_level(int l)
 }
 
 
-void vslog_log(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...) 
+void vslog_log(LOG_LEVEL lev, int lineno, const char *file, double milis, const char *format, ...) 
 {
     
     vslog_levelnfo_t levelnfo;
@@ -40,7 +40,7 @@ void vslog_log(LOG_LEVEL lev, int lineno, const char *file, const char *format, 
     vsprintf(msg, format, args);
   
     snprintf(loc, 128, "%s:%d", file, lineno);
-    snprintf(temp, 512, "[%c] %-30s > %s", levelnfo.symbol, loc, msg); 
+    snprintf(temp, 512, "%f,%c,%-30s,%s", levelnfo.symbol, loc, msg); 
 
     vsutils_term_printcolor(colorized, (const char*)temp, levelnfo.color, COLOR_BLACK, sizeof(colorized)/sizeof(char));
 
