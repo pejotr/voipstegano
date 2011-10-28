@@ -1,8 +1,0 @@
-env = Environment(CC = 'g++', CCFLAGS = '-ggdb')
-
-env.Append(CPPPATH = ['../../include/'])
-
-object_list = env.Object(source = ['double_test.c'])
-object_list.append('../../build/algo/double.o')
-
-env.Program(target='exe_double_test', source = object_list)
