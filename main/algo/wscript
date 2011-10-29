@@ -1,0 +1,10 @@
+
+def build(bld):
+    t = bld.objects(
+        features = "cxx",
+        includes = bld.env.includes,
+        source   = [ 
+            "double.c"
+        ],
+        target   = "algo"
+    )

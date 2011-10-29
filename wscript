@@ -19,5 +19,25 @@ def build(bld):
         "/usr/lib/sigc++-2.0/include"
     ]
 
-    bld.recurse('main')
+    bld.recurse("main")
+    bld.recurse("lib")
+
+    t = bld(
+        features = "cxx cxxprogram",
+        source   = "main.cpp",
+        target   = "testmain",
+        includes = bld.env.includes,
+        lib      = ["pthread"],
+        use      = [
+            "sip", 
+            "rtp", 
+            "tools",
+            "algo",
+            "exttools",
+            "libpjproject", 
+            "libnetfilter_queue",
+            "libsigc++",
+            "libxml2"
+        ]
+    )
 

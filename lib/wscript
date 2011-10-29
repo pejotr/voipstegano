@@ -1,0 +1,9 @@
+def build(bld):
+    t = bld.objects(
+        features = "cxx",
+        includes = "../include/md5",
+        source   = [ 
+            "md5/md5.c"
+        ],
+        target   = "exttools"
+    )
