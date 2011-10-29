@@ -1,9 +1,12 @@
 
 def configure(cnf):
+    cnf.check_cfg(package="libnetfilter_queue", atleast_version="1.0.0", args="--cflags --libs", uselib_store="libnetfilter_queue")
+    cnf.check_cfg(package="sigc++-2.0", args="--cflags --libs", uselib_store="libsigc++")
+    cnf.check_cfg(path="xml2-config", args="--cflags --libs", package="", uselib_store="libxml2")
     cnf.recurse("sip")
 
 def build(bld):
-    t = bld(
+    t = bld.objects(
         features = "cxx",
         includes = bld.env.includes,
         source   = [ 
@@ -15,9 +18,10 @@ def build(bld):
             "netfilter.c",
             "terminal.c",
             "utils.c"
-        ]
+        ],
+        target   = "tools"
     )
 
     bld.recurse("sip")
-    #bld.recurse("rtp")
+    bld.recurse("rtp")
     #bld.recurse("algo")

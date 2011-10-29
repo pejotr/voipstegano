@@ -1,0 +1,14 @@
+
+def build(bld):
+
+    t = bld.objects(
+        features = "cxx",
+        includes = bld.env.includes,
+        source   = [ 
+            "mgr.cxx",
+            "recv.cxx",
+            "send.cxx",
+            "rtp.cxx"
+        ],
+        target   = "rtp"
+    )
