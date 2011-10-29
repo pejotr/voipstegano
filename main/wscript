@@ -1,0 +1,23 @@
+
+def configure(cnf):
+    cnf.recurse("sip")
+
+def build(bld):
+    t = bld(
+        features = "cxx",
+        includes = bld.env.includes,
+        source   = [ 
+            "activelogger.cxx",
+            "config.c",
+            "databank.c",
+            "logger.c",
+            "net.c",
+            "netfilter.c",
+            "terminal.c",
+            "utils.c"
+        ]
+    )
+
+    bld.recurse("sip")
+    #bld.recurse("rtp")
+    #bld.recurse("algo")
