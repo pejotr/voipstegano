@@ -1,0 +1,15 @@
+
+def configure(cnf):
+    cnf.check_cfg(package="libpjproject", atleast_version="1.10")
+
+def build(bld):
+
+    t = bld.objects(
+        features = "cxx",
+        includes = bld.env.includes,
+        source   = [ 
+            "common.cxx",
+            "inout.cxx",
+        ],
+        target   = "sip"
+    )
