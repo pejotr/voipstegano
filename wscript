@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# encoding: utf-8
+
 top = '.'
 out = 'build'
 
@@ -7,6 +10,17 @@ def options(opt):
 def configure(cnf):
     cnf.check_tool('compiler_cxx')
     cnf.recurse("main")
+
+    conf.setenv('sender')
+    conf.load('compiler_cxx')
+    conf.define("MODULE_SENDER", 1)
+    conf.write_config_header("sender/config.h", remove=False)
+
+    conf.setenv('receiver')
+    conf.load('compiler_cxx')
+    conf.define("MODULE_RECEIVER", 1)
+    conf.write_config_header("receiver/config.h")
+
 
 def build(bld):    
     voipsteg_inc = bld.path.abspath() + "/include"
@@ -40,4 +54,13 @@ def build(bld):
             "libxml2"
         ]
     )
+
+def init(ctx):
+    from waflib.Build import BuildContext, CleanContext, InstallContext, UninstallContext
+    for x in 'sender receiver'.split():
+        for y in (BuildContext, CleanContext, InstallContext, UninstallContext):
+	    name = y.__name__.replace('Context','').lower()
+	    class tmp(y):
+	        cmd = name + '_' + x
+		variant = x
 
