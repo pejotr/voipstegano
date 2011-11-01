@@ -11,15 +11,15 @@ def configure(cnf):
     cnf.check_tool('compiler_cxx')
     cnf.recurse("main")
 
-    conf.setenv('sender')
-    conf.load('compiler_cxx')
-    conf.define("MODULE_SENDER", 1)
-    conf.write_config_header("sender/config.h", remove=False)
+    cnf.setenv('sender', env = cnf.env.derive())
+    cnf.load('compiler_cxx')
+    cnf.define("MODULE_SENDER", 1)
+    cnf.write_config_header("sender/config.h", remove=False)
 
-    conf.setenv('receiver')
-    conf.load('compiler_cxx')
-    conf.define("MODULE_RECEIVER", 1)
-    conf.write_config_header("receiver/config.h")
+    cnf.setenv('receiver', env = cnf.env.derive())
+    cnf.load('compiler_cxx')
+    cnf.define("MODULE_RECEIVER", 1)
+    cnf.write_config_header("receiver/config.h")
 
 
 def build(bld):    
@@ -36,7 +36,7 @@ def build(bld):
     bld.recurse("main")
     bld.recurse("lib")
 
-    t = bld(
+    t = bld.program(
         features = "cxx cxxprogram",
         source   = "main.cpp",
         target   = "testmain",
@@ -59,8 +59,8 @@ def init(ctx):
     from waflib.Build import BuildContext, CleanContext, InstallContext, UninstallContext
     for x in 'sender receiver'.split():
         for y in (BuildContext, CleanContext, InstallContext, UninstallContext):
-	    name = y.__name__.replace('Context','').lower()
-	    class tmp(y):
-	        cmd = name + '_' + x
-		variant = x
+            name = y.__name__.replace('Context','').lower()
+            class tmp(y):
+                cmd = name + '_' + x
+                variant = x
 
