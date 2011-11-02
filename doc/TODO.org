@@ -1,11 +1,9 @@
-* TODO zmodyfikowac nadawanie tak aby pakiety nie byly niepotrzebnie kolejkowane 
+* IDEA zmodyfikowac nadawanie tak aby pakiety nie byly niepotrzebnie kolejkowane 
 ** PROBLEM brak pakietow w kolejce
 Jesli nie skolejkuje sie na poczatku kilku pakietow to nie ma pewnosci ze nadanie bitu sie uda gdyz rozmowa moze sie w kazdej chwili zakonczyc. Jesli nie uda sie przeslac tego jednego bitu to cala paczka idzie do piachu
 Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiazaniem
 
 * TODO Protokol potwierdzen i powtorzen
-
-
 
 * Co mozna zrobic z pakietami RTP?
 ** Powielic
@@ -13,3 +11,11 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
 ** Opoznic
 ** Przyspieszyc
 ** Zamienic kolejnosc <-- to tez jest opoznienie bo trzeba dysponowac dwoma pakietami
+
+* Schemat dzialania:
+  1. nadawca wysyla sekewencje A informujaca o paczce danych
+  2. nadawca rozpoczyna wysylanie paczki danych
+  3. odbiornik potwierdza odebranie paczki
+
+
+
