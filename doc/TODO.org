@@ -1,28 +1,34 @@
+#+TODO: IDEA TODO INFO
+
 * IDEA zmodyfikowac nadawanie tak aby pakiety nie byly niepotrzebnie kolejkowane 
 ** PROBLEM brak pakietow w kolejce
 Jesli nie skolejkuje sie na poczatku kilku pakietow to nie ma pewnosci ze nadanie bitu sie uda gdyz rozmowa moze sie w kazdej chwili zakonczyc. Jesli nie uda sie przeslac tego jednego bitu to cala paczka idzie do piachu
 Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiazaniem
 
+* IDEA Minimalna liczba pakietow w danym strumieniu pomiedzy bitami - unikanie pomylek
+  W strumieni musi uplynac przynajmniej X pakietow zanim zostanie nadany bit. To moze pozwolic na unikniecie przypadkowych przeklaman, ale wymaga kolejkowanie pakietow nawet jesli strumien jest nieoblusgiwany
+
+* IDEA Pobranie pakietu z kolejki, wykonanie kopii i akceptacja - obrabianie w oddzielnym watku - speed gain
+
+* IDEA Sekwencja przenosząca bit musi zaczynac sie od pakietu ktorego SEQ podzielne przez np. 5
+* IDEA Rozmiar okna - ilosc bitow ktore nie wymagaja potwierdzenia
+* IDEA Potwierdzenie - powielenie pakietu SEQ parz - OK SEQ nparz - NOK
 
 * TODO Protokol potwierdzen i powtorzen
+* TODO W dokumentacji opisac ramke SDP, wkleic PELNA z Wiresharka
 
-* Co mozna zrobic z pakietami RTP?
+
+* INFO Co mozna zrobic z pakietami RTP?
 ** Powielic
 ** Zgubic
 ** Opoznic
 ** Przyspieszyc
 ** Zamienic kolejnosc <-- to tez jest opoznienie bo trzeba dysponowac dwoma pakietami
 
-
-* Schemat dzialania:
+* INFO Schemat dzialania:
   1. nadawca wysyla sekewencje A informujaca o paczce danych
   2. nadawca rozpoczyna wysylanie paczki danych
   3. odbiornik potwierdza odebranie paczki
-
-* Minimalna liczba pakietow w danym strumieniu pomiedzy bitami - unikanie pomylek
-  W strumieni musi uplynac przynajmniej X pakietow zanim zostanie nadany bit. To moze pozwolic na unikniecie przypadkowych przeklaman, ale wymaga kolejkowanie pakietow nawet jesli strumien jest nieoblusgiwany
-
-* TODO W dokumentacji opisac ramke SDP, wkleic PELNA z Wiresharka
 
 * Zminimalizowac liczb watkow - modul sip::inout moze byc obsluzony jednym
 
