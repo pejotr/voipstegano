@@ -23,3 +23,8 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
   W strumieni musi uplynac przynajmniej X pakietow zanim zostanie nadany bit. To moze pozwolic na unikniecie przypadkowych przeklaman, ale wymaga kolejkowanie pakietow nawet jesli strumien jest nieoblusgiwany
 
 * TODO W dokumentacji opisac ramke SDP, wkleic PELNA z Wiresharka
+
+* Zminimalizowac liczb watkow - modul sip::inout moze byc obsluzony jednym
+
+* PROBLEM co zrobic jesli zostanie nadany bit, a potwierdzenie nie przyjdzie bo rozmowa zostala zakonczona i nie ma pakietow w kolejce?
+** W odbiorniku przynajmniej jeden pakiet - potwierdzenie przez powielenie

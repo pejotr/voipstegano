@@ -42,6 +42,12 @@ namespace sip
 {
     typedef struct sip_common_session session_t;
 
+    //! Module for handling SIP messages
+    /*!
+        One instance of "inout" module is able to process only one netfilter queue. For full introspection
+	two instances had to be run. Both of them are started as separated threads when "sip" module is
+	initialized.
+     */
     namespace inout 
     {   
     //@{
@@ -70,5 +76,5 @@ namespace sip
     }
 }
 
-#endif /* _VOIPSTEG_SIP_TORECV_ */
+#endif /* _VOIPSTEG_SIP_INOUT_ */
 
