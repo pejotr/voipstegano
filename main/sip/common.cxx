@@ -76,8 +76,9 @@ void* sip::init(void *pParams)
         config_recv->pszQueue = sipqueueb->value.strval;
         config_recv->pszPort  = sipportb->value.strval;
         config_recv->dirInd   = INCOMMING;
-        pthread_create(&thread_send, NULL, sip::inout::init, static_cast<void*>(config_send));
-        pthread_create(&thread_recv, NULL, sip::inout::init , static_cast<void*>(config_recv));
+
+        pthread_create(&thread_send, NULL, sip::inout::main_routine, static_cast<void*>(config_send));
+        pthread_create(&thread_recv, NULL, sip::inout::main_routine, static_cast<void*>(config_recv));
     }
     else
     {

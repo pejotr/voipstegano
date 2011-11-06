@@ -52,7 +52,7 @@ namespace sip
     //@}
 
     //! Initialize SIP capturing system for incomming packets
-    void* init(void *pParam);
+    void* main_routine(void *pParam);
 
     //! Queue handling function
     /*!

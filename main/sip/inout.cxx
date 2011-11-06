@@ -41,6 +41,8 @@ namespace sip { namespace inout {
 namespace 
 {
 
+bool mIsRunning;
+
 std::map<pjsip_method_e, msg_handler_func> mReqMessageHandler;
 std::map<int, msg_handler_func> mStatusMessageHandler;
 std::map<pthread_t, MODULE_DIR> gsThreadSpecData;
@@ -72,7 +74,7 @@ int reinvite(session_t *session, struct pjsip_msg *pSipMsg, const char *pBuf, in
 
 }
 
-void* init(void *pParam)
+void* main_routine(void *pParam)
 {
     int             err = 0;
     int             rv, fd;
