@@ -41,11 +41,9 @@ namespace sip { namespace inout {
 namespace 
 {
 
-bool mIsRunning;
-
 std::map<pjsip_method_e, msg_handler_func> mReqMessageHandler;
 std::map<int, msg_handler_func> mStatusMessageHandler;
-std::map<pthread_t, MODULE_DIR> gsThreadSpecData;
+std::map<pthread_t, QUEUE_DIRECTION> mThreadDirection;
 std::string directionInd;
 
 //@{
@@ -84,19 +82,20 @@ void* main_routine(void *pParam)
     pj_thread_t     *this_thread;
     pj_status_t     status;
     module_conf_t   *conf = static_cast<module_conf_t*>(pParam);
-    pthread_t       me;
+    pthread_t       me    = pthread_self();
     
     SYS_LOG(E_NOTICE, "Starting sip::inout thread. Queue number is %s and port is %s", conf->pszQueue, conf->pszPort);    
 
     status = pj_thread_register("in-thread", desc, &this_thread);
+
     if( status != PJ_SUCCESS) 
     {
         SYS_LOG(E_ERROR, "Error in pj_thread_register");
         delete conf;
         return NULL;
     }
-    me = pthread_self(); 
-    gsThreadSpecData[me] = conf->dirInd;
+
+    mThreadDirection[me] = conf->dirInd;
 
     mStatusMessageHandler.insert( std::make_pair(200, ok200)         ); 
     mStatusMessageHandler.insert( std::make_pair(407, par407)        );
@@ -223,16 +222,16 @@ int invite1(session_t *session, struct pjsip_msg *pSipMsg, const char *pBuf, int
     {
         net_get_ip_readable(length, pBuf, saddr, daddr);
 
-        switch( gsThreadSpecData[me] )
+        switch( mThreadDirection[me] )
         {
-            case INCOMMING:
+            case INCOMMING_PACKETS:
             {
                 newsession.ipremote     = net_saddr;
                 newsession.iplocal      = net_daddr;
                 newsession.portremote   = port;
                 break;
             }
-            case OUTGOING:
+            case OUTGOING_PACKETS:
             {
                 newsession.ipremote     = net_daddr;
                 newsession.iplocal      = net_saddr;
@@ -274,14 +273,14 @@ int reinvite(session_t *session, struct pjsip_msg *pSipMsg, const char *pBuf, in
 
             net_string2ip(connaddr.c_str(), &newDestAddr);
 
-            switch( gsThreadSpecData[me] )
+            switch( mThreadDirection[me] )
             {
-                case INCOMMING:
+                case INCOMMING_PACKETS:
                     session->ipremote   = newDestAddr;
                     session->portremote = port;
                     sig_reinvite.emit(oldsession, session);
                     break;
-                case OUTGOING:
+                case OUTGOING_PACKETS:
                     DO_NOTHING();
                     break;
                 default:
@@ -386,12 +385,12 @@ int ok200 (session_t *session, struct pjsip_msg *pSipMsg, const char *pBuf, int 
             return -1;
         }
 
-        switch( gsThreadSpecData[me] )
+        switch( mThreadDirection[me] )
         {
-            case INCOMMING:
+            case INCOMMING_PACKETS:
                 session->portremote = port;
                 break;
-            case OUTGOING:
+            case OUTGOING_PACKETS:
                 session->portlocal = port;
                 break;
             default:

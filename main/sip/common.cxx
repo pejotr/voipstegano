@@ -71,11 +71,11 @@ void* sip::init(void *pParams)
     {
         config_send->pszQueue = sipqueuea->value.strval;
         config_send->pszPort  = sipporta->value.strval;
-        config_send->dirInd   = OUTGOING;
+        config_send->dirInd   = OUTGOING_PACKETS;
 
         config_recv->pszQueue = sipqueueb->value.strval;
         config_recv->pszPort  = sipportb->value.strval;
-        config_recv->dirInd   = INCOMMING;
+        config_recv->dirInd   = INCOMMING_PACKETS;
 
         pthread_create(&thread_send, NULL, sip::inout::main_routine, static_cast<void*>(config_send));
         pthread_create(&thread_recv, NULL, sip::inout::main_routine, static_cast<void*>(config_recv));

@@ -45,10 +45,10 @@ extern "C"
 namespace sip {
 
 //! Session status enumerator
-enum SESSION_STATUS { INVITE1, AUTHREQ, ACK1, INVITE2, OK1, ACK2, ESTABLISHED, BYE, SRVUNAVAIL, REINVITE, REINVITEOK1 };
+enum SESSION_STATUS  { INVITE1, AUTHREQ, ACK1, INVITE2, OK1, ACK2, ESTABLISHED, BYE, SRVUNAVAIL, REINVITE, REINVITEOK1 };
 
 //! Module direction indicator
-enum MODULE_DIR     { UNDEF, INCOMMING, OUTGOING };
+enum QUEUE_DIRECTION { UNDEF, INCOMMING_PACKETS, OUTGOING_PACKETS };
 
 //! Internal session description
 typedef struct sip_common_session {
@@ -70,7 +70,7 @@ typedef int (*msg_handler_func)(session_t *session,struct pjsip_msg *pSipMsg, co
 typedef struct {
     const char *pszQueue;
     const char *pszPort;
-    MODULE_DIR dirInd;
+    QUEUE_DIRECTION dirInd;
 } module_conf_t;
 
 typedef std::map<std::string, session_t>                        session_map_t;
