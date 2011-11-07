@@ -5,10 +5,7 @@ def build(bld):
         features = "cxx",
         includes = bld.env.includes,
         source   = [ 
-            "mgr.cxx",
-            "recv.cxx",
-            "send.cxx",
-            "rtp.cxx"
+            "sender.cxx",
         ],
         target   = "rtp"
     )

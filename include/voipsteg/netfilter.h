@@ -48,6 +48,13 @@ extern "C" {
 
 extern int  __netfilter_errorno;
 
+//! Queue description
+typedef struct 
+{
+    struct nfq_handle   *pNfqHandle;
+    int                 queuefd;
+    int                 queueNum;
+} queue_desc_t;
 
 typedef struct
 {

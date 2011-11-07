@@ -33,15 +33,6 @@ extern "C"
 namespace rtp 
 {
 
-
-typedef struct 
-{
-    struct nfq_handle   *pNfqHandle;
-    int                 queuefd;
-    int                 queueNum;
-} queue_desc_t;
-
-
 typedef void*   (*thread_func)(void*);
 typedef int     (*msg_handler_func)(struct pjsip_msg *pSipMsg, const char *pBuf, int length);
 typedef int     (*handle_func)(struct nfq_q_handle *pQh, struct nfgenmsg *pNfmsg, struct nfq_data *pNfa, void *pData);

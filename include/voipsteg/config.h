@@ -13,8 +13,14 @@ extern "C" {
 
 #include "voipsteg/logger.h"
 
+#define RTP_COVERT_FROM   "rtp-covert-from"
+#define RTP_SERVICE_FROM  "rtp-service-from"
+#define RTP_STREAMS_COUNT "streams-count"
+
 const int CONFIG_STRVAL_SIZE = 128;
 const int STRING_EQUAL  = 0;
+
+
 
 typedef struct {
     bool isvalid;
