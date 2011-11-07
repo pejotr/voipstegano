@@ -35,6 +35,9 @@ namespace rtp
             /** Threads control */
             pthread_t covertChanThrd;
             pthread_t serviceChanThrd;
+       
+            //! Blocks concurrent operations on sender instance 
+            pthread_mutex_t blockMtx;
 
             //! Indicate if sender is working
             bool busy;
@@ -50,14 +53,6 @@ namespace rtp
         //! Initialize sender module
         void initialize();
 
-        //! Create new sender instance
-        /*!
-            Initializae all required fields and run two threads. One thread is
-            responsible for RTP covert channel (used to send data), and the 
-            second one take care of RTP service channel (used to receive ACK, NAK)  
-        */
-        void* create_new(void *pParam);
-    
     } /* namespace sender  */
 } /* namespace rtp  */
 
