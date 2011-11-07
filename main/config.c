@@ -2,21 +2,24 @@
 
 vsconf_node_t config[] = {
     //       name        isvalid isstr value
-    { "sip-queuenum-a"  , false, true,  "" },
-    { "sip-queuenum-b"  , false, true,  "" },
-    { "sip-port-a"      , false, true,  "" },
-    { "sip-port-b"      , false, true,  "" },
-    { "queue-lonum"     , false, false, -1 },
-    { "queue-upnum"     , false, false, -1 },
-    { "sender"          , false, true,  "" },
-    { "filename"        , false, true,  "" },
-    { "dstfile"         , false, true,  "" },
-    { "delta"           , false, false, -1 },
-    { "d0"              , false, false, -1 },
-    { "d1"              , false, false, -1 },
-    { "offset"          , false, false, -1 },
-    { "tokenswitch"     , false, false, -1 },
-    { "streamchoose"    , false, false, -1 }
+    { "sip-queuenum-a"   , false, false, -1 },
+    { "sip-queuenum-b"   , false, false, -1 },
+    { "sip-port-a"       , false, true,  "" },
+    { "sip-port-b"       , false, true,  "" },
+
+    { "rtp-covert-from"  , false, false, -1 }, /* covert queue lower bound   */
+    { "rtp-service-from" , false, false, -1 }, /* service queue lower bound  */
+    { "streams-count"    , false, false, -1 }, /* number of channels         */
+
+    { "sender"           , false, true,  "" },
+    { "filename"         , false, true,  "" },
+    { "dstfile"          , false, true,  "" },
+    { "delta"            , false, false, -1 },
+    { "d0"               , false, false, -1 },
+    { "d1"               , false, false, -1 },
+    { "offset"           , false, false, -1 },
+    { "tokenswitch"      , false, false, -1 },
+    { "streamchoose"     , false, false, -1 }
 };
 
 const int CONFIG_ELEMENTS = sizeof(config)/sizeof(vsconf_node_t);

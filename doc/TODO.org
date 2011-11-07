@@ -1,4 +1,4 @@
-#+TODO: IDEA TODO INFO
+#+TODO: IDEA TODO INFO INPROGRESS
 
 * IDEA zmodyfikowac nadawanie tak aby pakiety nie byly niepotrzebnie kolejkowane 
 ** PROBLEM brak pakietow w kolejce
@@ -17,6 +17,8 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
 * TODO Protokol potwierdzen i powtorzen
 * TODO W dokumentacji opisac ramke SDP, wkleic PELNA z Wiresharka
 
+* TODO Zmodyfikowac pola w pliku konfiguracyjnym
+* TODO Komunikaty SIP korzystaja z wielu kolejek? A po co?
 
 * INFO Co mozna zrobic z pakietami RTP?
 ** Powielic
