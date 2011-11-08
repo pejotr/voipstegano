@@ -97,9 +97,10 @@ void create_new()
 sender_context_t* grab_sender()
 {
     const vsconf_value_t *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
-    sender_context_t     *sender;
+    sender_context_t *sender = NULL,
+        *freeSender = NULL;
 
-    for(int i(0); i < streamsCount->value.numval; ++i)
+    for(int i(0); i < streamsCount->value.numval, freeSender != NULL; ++i)
     {
         sender = &mSenderInstances[i];
 
@@ -107,14 +108,12 @@ sender_context_t* grab_sender()
         {
             LOCK_SENDER_INSTANCE(sender);
             
-            if(sender->busy == false)
-            {
-                sender->busy = true;
-                mFreeSenderInstances -= 1;
-                FREE_SENDER_INSTANCE(sender);
-                
-                return sender;
-            }
+                if(sender->busy == false)
+                {
+                    sender->busy = true;
+                    freeSender = sender;
+                    mFreeSenderInstances -= 1;
+                }
 
             FREE_SENDER_INSTANCE(sender);
         }
