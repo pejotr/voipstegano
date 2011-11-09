@@ -23,6 +23,7 @@
 #include "voipsteg/rtp/sender.hxx"
 #include "voipsteg/sip/common.hxx"
 #include "voipsteg/sip/inout.hxx"
+#include "voipsteg/activelogger.hxx"
 
 namespace rtp { namespace sender {
 
@@ -31,8 +32,8 @@ namespace
     sender_context_t *mSenderInstances;
     unsigned int      mFreeSenderInstances;
 
-    void inline LOCK_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_lock(c->blockMtx);   }
-    void inline FREE_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(c->blockMtx); }
+    void inline LOCK_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_lock(&c->blockMtx);   }
+    void inline FREE_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(&c->blockMtx); }
 
     //! Create new sender instance
     /*!
@@ -62,8 +63,6 @@ void initialize()
     mSenderInstances = new sender_context_t[streamsCount->value.numval];
     mFreeSenderInstances = streamsCount->value.numval;
 
-    pthread_mutex_init(&mSenderInstancesMtx, NULL);
-
     for(int i(0); i < streamsCount->value.numval; ++i)
     {
         covertChanQueue.pNfqHandle = 
@@ -76,10 +75,14 @@ void initialize()
         serviceChanQueue.queuefd = nfq_fd(serviceChanQueue.pNfqHandle);
         serviceChanQueue.queueNum = serviceFrom->value.numval + i;
 
+        pthread_mutex_init(&mSenderInstances[i].blockMtx, NULL);
+
         mSenderInstances[i].busy             = false;
         mSenderInstances[i].covertChanQueue  = covertChanQueue;
         mSenderInstances[i].serviceChanQueue = serviceChanQueue;
     }
+
+    sip::inout::sig_init.connect( sigc::ptr_fun(slot_newstream) );
 
 }
 
@@ -90,7 +93,16 @@ void create_new()
 {
     int instanceIdx;
 
-    instanceIdx = grab_free_sender(mSenderInstances);
+    instanceIdx = grab_sender();
+
+    if(instanceIdx != -1)
+    {
+    }
+    else
+    {
+        APP_LOG(E_NOTICE, "<create_new> No free queue to handle stream");
+        return;
+    }
 
 }
 
@@ -102,10 +114,9 @@ sender_context_t* grab_sender()
 
     for(int i(0); i < streamsCount->value.numval, freeSender != NULL; ++i)
     {
-        sender = &mSenderInstances[i];
-
-        if(sender.busy == false)
-        {
+        if(mSenderInstances[i].busy == false)
+        {        
+            sender = &mSenderInstances[i];
             LOCK_SENDER_INSTANCE(sender);
             
                 if(sender->busy == false)
@@ -122,18 +133,18 @@ sender_context_t* grab_sender()
 
 void slot_newstream(sip::session_t *session)
 {
-    SYS_LOG(E_DEBUG, "<slot_newstream> New stream event");
+    APP_LOG(E_DEBUG, "<slot_newstream> New stream event");
     create_new();
 }
 
 void slot_delstream(sip::session_t *session)
 {
-    SYS_LOG(E_DEBUG, "<slot_delstream> New stream event");
+    APP_LOG(E_DEBUG, "<slot_delstream> New stream event");
 }
 
 void slot_reinvite(sip::session_t *session)
 {
-    SYS_LOG(E_DEBUG, "<slot_reivinte> New stream event");
+    APP_LOG(E_DEBUG, "<slot_reivinte> New stream event");
 }
 
 }

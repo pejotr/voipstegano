@@ -58,8 +58,8 @@ typedef struct sip_common_session {
                    portlocal;
     enum SESSION_STATUS status;
 
-    int queueNum;
-    char szChain[8];
+    //int queueNum;
+    //char szChain[8];
 } session_t;
 
 //! Handlers tyle definition

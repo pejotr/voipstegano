@@ -1,4 +1,4 @@
-#+TODO: IDEA TODO INFO INPROGRESS
+#+TODO: IDEA TODO INFO INPROGRESS DONE
 
 * IDEA zmodyfikowac nadawanie tak aby pakiety nie byly niepotrzebnie kolejkowane 
 ** PROBLEM brak pakietow w kolejce
@@ -19,6 +19,7 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
 
 * TODO Zmodyfikowac pola w pliku konfiguracyjnym
 * TODO Komunikaty SIP korzystaja z wielu kolejek? A po co?
+  Wydaje sie ze jednak jest jedna kolejka dla komunikatow od-nadajnika i jedna dla od-odbiornika wiec ok.
 
 * INFO Co mozna zrobic z pakietami RTP?
 ** Powielic
@@ -33,6 +34,7 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
   3. odbiornik potwierdza odebranie paczki
 
 * Zminimalizowac liczb watkow - modul sip::inout moze byc obsluzony jednym
-
+  Teoretycznie obie kolejki mozna obsluzyc select'em. Nie ma wtedy tej brzydkiej globalnej mapy definiujacej kto jest kto. Komunikatow SIP chyba tez nei ma tak duzo zeby potrzebny byl oddzielny watek
+ 
 * PROBLEM co zrobic jesli zostanie nadany bit, a potwierdzenie nie przyjdzie bo rozmowa zostala zakonczona i nie ma pakietow w kolejce?
 ** W odbiorniku przynajmniej jeden pakiet - potwierdzenie przez powielenie
