@@ -44,9 +44,6 @@ namespace rtp
             pthread_t covertChanThrd;
             pthread_t serviceChanThrd;
 
-            //! Hold thread in idle state until session is assigned
-            pthread_cond_t startCond;
-
             //! Blocks concurrent operations on sender instance 
             pthread_mutex_t blockMtx;
 
