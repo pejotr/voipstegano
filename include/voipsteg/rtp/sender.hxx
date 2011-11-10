@@ -19,14 +19,22 @@
 #ifndef _VOIPSTEG_RTP_SENDER_
 #define _VOIPSTEG_RTP_SENDER_
 
-#include "voipsteg/netfilter.h"
+#include <list>
 
+#include "voipsteg/netfilter.h"
+#include "voipsteg/net.h"
 
 namespace rtp
 {
     //! All logic for sending data using covert RTP channel
     namespace sender
     {
+
+        //! Sender possible states
+        enum SENDER_STATE { 
+            BITSEND, /* seding bit state   */
+            ACKWAIT  /* sender waits for ACK to arrive on service chan */
+        };
 
         //! Sender instance description and private data
         typedef struct rtp_sender_context 
@@ -35,13 +43,23 @@ namespace rtp
             /** Threads control */
             pthread_t covertChanThrd;
             pthread_t serviceChanThrd;
-       
+
+            //! Hold thread in idle state until session is assigned
+            pthread_cond_t startCond;
+
             //! Blocks concurrent operations on sender instance 
             pthread_mutex_t blockMtx;
 
-            //! Indicate if sender is working
+            //! Sender status indicators
             bool busy;
+            bool alive;
             //@}
+
+            //! Queued packets
+            std::list<packet_wrapper_t> packets;
+
+            //! Current state
+            SENDER_STATE state;
 
             //@{
             /** Queues and packets */

@@ -38,3 +38,6 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
  
 * PROBLEM co zrobic jesli zostanie nadany bit, a potwierdzenie nie przyjdzie bo rozmowa zostala zakonczona i nie ma pakietow w kolejce?
 ** W odbiorniku przynajmniej jeden pakiet - potwierdzenie przez powielenie
+
+
+* TODO [1] Modul sender i revceiver ktore akceptuja pakiety bez wplywania na opznienia

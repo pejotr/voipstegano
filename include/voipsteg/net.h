@@ -11,7 +11,14 @@ extern "C" {
 #include <linux/ip.h>
 #include <linux/udp.h>
 
+#define PACKET_SIZE 4096
 
+//! Copy of packet
+typedef net_packet_wrapper
+{
+    char buf[PACKET_SIZE];
+    int  rv;
+} packet_wrapper_t;
 
 //! For retriving IP address of sender and receiver
 struct iphdr* vsnet_parse_ip_hdr(int length, const char* buf);
