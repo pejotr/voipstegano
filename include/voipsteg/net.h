@@ -14,7 +14,7 @@ extern "C" {
 #define PACKET_SIZE 4096
 
 //! Copy of packet
-typedef net_packet_wrapper
+typedef struct net_packet_wrapper
 {
     char buf[PACKET_SIZE];
     int  rv;

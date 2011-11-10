@@ -35,13 +35,17 @@ namespace
     /** Sender state machine desciption  */
 
     //! State handler function type
-    typedef int (*state_action_t)();
+    typedef int (*state_action_t)(sender_context_t *ctx);
 
     //! State definition
     typedef struct rtp_state_machine {
         SENDER_STATE   state;
         state_action_t handler;
     } state_t;
+
+    //! State handlers
+    int state_bitsend(sender_context_t *ctx);
+    int state_ackwait(sender_context_t *ctx);
 
     //! Machine definition
     /*!
@@ -87,10 +91,9 @@ namespace
 
 
     //! Find free, ready to use sender instance
-    int grab_sender();
+    sender_context_t* grab_sender();
 
-    int state_bitsend();
-    int state_ackwait();
+
 
     void slot_newstream(sip::session_t *session);
     void slot_delstream(sip::session_t *session);
@@ -140,7 +143,7 @@ void* send_controller(void *pParams)
     struct timeval tv;
     int ret, rv;
     char buf[4096];
-    state_t state;
+    state_t *state;
     packet_wrapper_t packet;
     sender_context_t *senderCtx = static_cast<sender_context_t*>(pParams);
     int nfds = senderCtx->covertChanQueue.queuefd;
@@ -164,20 +167,20 @@ void* send_controller(void *pParams)
                 //       dane watku nadawczego ?
 
                 //LOCK_SENDER_INSTANCE(senderCtx);
-                if((rv = recv(senderCtx->covertChanQueue.queuefd, buf, sizeof(buf)) &&
+                if((rv = recv(senderCtx->covertChanQueue.queuefd, buf, sizeof(buf), MSG_DONTWAIT)) &&
                     rv >= 0)
                 {
                     memcpy(packet.buf, buf, rv);
                     packet.rv = rv;
-                    senderCtx->covertChanQueue.push_back(packet);
+                    senderCtx->packets.push_back(packet);
                 }
                 //FREE_SENDER_INSTANCE(senderCtx);
 
-                state = mSenderFSM[senderCtx->state];
-                state->handler();
+                state = &mSenderFSM[senderCtx->state];
+                state->handler(senderCtx);
             }
         }
-        else if(retval == -1)
+        else if(ret == -1)
         {
             APP_LOG(E_ERROR, "<send_controller> select() error");
             senderCtx->alive = false;
@@ -189,7 +192,6 @@ void* send_controller(void *pParams)
         }
     }
 
-    return -1;
 }
 
 void* recv_controller(void *pParams)
@@ -203,13 +205,11 @@ void create_new()
 {
     sender_context_t *freeSenderCtx;
 
-    freeSenderContext = grab_sender();
+    freeSenderCtx = grab_sender();
 
     if(freeSenderCtx)
     {
         // setup initial state
-
-        pthread_cond_signal(freeSenderCtx->startCond);
     }
     else
     {
