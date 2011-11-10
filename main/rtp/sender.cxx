@@ -210,6 +210,7 @@ void create_new()
     if(freeSenderCtx)
     {
         // setup initial state
+        freeSenderCtx->state = INIT;
     }
     else
     {

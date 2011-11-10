@@ -32,10 +32,24 @@ namespace rtp
 
         //! Sender possible states
         enum SENDER_STATE { 
-            BITSEND, /* seding bit state   */
+	    INIT,    /* initialization                                 */
+            BITSEND, /* seding bit state                               */
             ACKWAIT  /* sender waits for ACK to arrive on service chan */
         };
 
+        //! Internal data for controlling covert channel
+        typedef rtp_sender_covert_nfo {
+            //! Queued packets
+            std::list<packet_wrapper_t> packets;
+
+            //! Current state
+            SENDER_STATE state;
+        } sender_covert_nfo_t;
+
+        //! Internal data for controlling service channel
+        typedef rtp_sender_service_nfo {
+        } sender_service_nfo_t ;
+ 
         //! Sender instance description and private data
         typedef struct rtp_sender_context 
         {      
@@ -44,7 +58,7 @@ namespace rtp
             pthread_t covertChanThrd;
             pthread_t serviceChanThrd;
 
-            //! Blocks concurrent operations on sender instance 
+            //! Sync concurrent operations on sender instance 
             pthread_mutex_t blockMtx;
 
             //! Sender status indicators
@@ -52,11 +66,11 @@ namespace rtp
             bool alive;
             //@}
 
-            //! Queued packets
-            std::list<packet_wrapper_t> packets;
-
-            //! Current state
-            SENDER_STATE state;
+            //@{
+            /** Private submodules data */
+            sender_covert_nfo_t covertNfo;
+            sender_service_nfo_t serviceNfo;
+            //@}
 
             //@{
             /** Queues and packets */
@@ -64,7 +78,7 @@ namespace rtp
             queue_desc_t serviceChanQueue;
             //@}
         } sender_context_t;
-    
+
         //! Initialize sender module
         void initialize();
 
