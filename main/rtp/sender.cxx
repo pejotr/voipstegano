@@ -20,6 +20,7 @@
 
 #include "voipsteg/config.h"
 #include "voipsteg/netfilter.h"
+#include "voipsteg/net.h"
 #include "voipsteg/rtp/sender.hxx"
 #include "voipsteg/sip/common.hxx"
 #include "voipsteg/sip/inout.hxx"
@@ -29,6 +30,34 @@ namespace rtp { namespace sender {
 
 namespace 
 {
+
+    //@{
+    /** Sender state machine desciption  */
+
+    //! State handler function type
+    typedef int (*state_action_t)();
+
+    //! State definition
+    typedef struct rtp_state_machine {
+        SENDER_STATE   state;
+        state_action_t handler;
+    } state_t;
+
+    //! Machine definition
+    /*!
+        States in array HAVE TO appear in the same order as they
+        are defined in enum SENDER_STATE
+        \see SENDER_STATE
+        \see send_controller
+     */
+    state_t mSenderFSM[] = {
+        { BITSEND, state_bitsend },
+        { ACKWAIT, state_ackwait }
+    };
+
+    //@}
+
+
     sender_context_t *mSenderInstances;
     unsigned int      mFreeSenderInstances;
 
@@ -37,15 +66,31 @@ namespace
 
     //! Create new sender instance
     /*!
-        Initializae all required fields, run two threads assign queue for
+        Initialize all required fields, run two threads assign queue for
         packetes.
         One thread is responsible for RTP covert channel (used to send data), 
         the other one is for RTP service channel (receive ACK, NAK).
     */
     void create_new();
 
+    //! Sender routine for data channel
+    /*!
+        Controll thread live. When this function ends, sender instance
+        cannot be used - alive flag is set to false.
+
+        \see sender_context_t
+     */
+    void* send_controller(void *pParams);
+
+    //! Sender routine for service channel 
+    void* recv_controller(void *pParams);
+
+
     //! Find free, ready to use sender instance
     int grab_sender();
+
+    int state_bitsend();
+    int state_ackwait();
 
     void slot_newstream(sip::session_t *session);
     void slot_delstream(sip::session_t *session);
@@ -77,33 +122,100 @@ void initialize()
 
         pthread_mutex_init(&mSenderInstances[i].blockMtx, NULL);
 
+        mSenderInstances[i].alive            = true;
         mSenderInstances[i].busy             = false;
         mSenderInstances[i].covertChanQueue  = covertChanQueue;
         mSenderInstances[i].serviceChanQueue = serviceChanQueue;
     }
 
     sip::inout::sig_init.connect( sigc::ptr_fun(slot_newstream) );
-
 }
 
 namespace
 {
 
+void* send_controller(void *pParams)
+{
+    fd_set rfds;
+    struct timeval tv;
+    int ret, rv;
+    char buf[4096];
+    state_t state;
+    packet_wrapper_t packet;
+    sender_context_t *senderCtx = static_cast<sender_context_t*>(pParams);
+    int nfds = senderCtx->covertChanQueue.queuefd;
+
+    FD_ZERO(&rfds);
+    FD_SET(senderCtx->covertChanQueue.queuefd, &rfds);
+
+    while(1)
+    {
+        tv.tv_sec = 2000;
+        tv.tv_usec = 0;
+
+        ret = select(nfds + 1, &rfds, NULL, NULL, &tv);
+
+        if(ret)
+        {
+            if(FD_ISSET(senderCtx->covertChanQueue.queuefd, &rfds))
+            {
+                // TODO: Czy synchronizacja jest potrzebna?
+                //       Czy istnieje inne watki ktore moge chciec modyfikwoac
+                //       dane watku nadawczego ?
+
+                //LOCK_SENDER_INSTANCE(senderCtx);
+                if((rv = recv(senderCtx->covertChanQueue.queuefd, buf, sizeof(buf)) &&
+                    rv >= 0)
+                {
+                    memcpy(packet.buf, buf, rv);
+                    packet.rv = rv;
+                    senderCtx->covertChanQueue.push_back(packet);
+                }
+                //FREE_SENDER_INSTANCE(senderCtx);
+
+                state = mSenderFSM[senderCtx->state];
+                state->handler();
+            }
+        }
+        else if(retval == -1)
+        {
+            APP_LOG(E_ERROR, "<send_controller> select() error");
+            senderCtx->alive = false;
+            break;
+        }
+        else
+        {
+            APP_LOG(E_DEBUG, "<send_cotroller> no data");
+        }
+    }
+
+    return -1;
+}
+
+void* recv_controller(void *pParams)
+{
+    while(1)
+    {
+    }
+}
+
 void create_new()
 {
-    int instanceIdx;
+    sender_context_t *freeSenderCtx;
 
-    instanceIdx = grab_sender();
+    freeSenderContext = grab_sender();
 
-    if(instanceIdx != -1)
+    if(freeSenderCtx)
     {
+        // setup initial state
+
+        pthread_cond_signal(freeSenderCtx->startCond);
     }
     else
     {
         APP_LOG(E_NOTICE, "<create_new> No free queue to handle stream");
         return;
     }
-
 }
 
 sender_context_t* grab_sender()
