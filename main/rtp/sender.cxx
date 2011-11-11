@@ -39,24 +39,29 @@ namespace
 
     //! State definition
     typedef struct rtp_state_machine {
-        SENDER_STATE   state;
+        SENDER_COVERT_STATE::e   state;
         state_action_t handler;
     } state_t;
 
     //! State handlers
     int state_bitsend(sender_context_t *ctx);
     int state_ackwait(sender_context_t *ctx);
+    int state_init   (sender_context_t *ctx);
+    int state_die    (sender_context_t *ctx);
 
     //! Machine definition
     /*!
         States in array HAVE TO appear in the same order as they
-        are defined in enum SENDER_STATE
-        \see SENDER_STATE
+        are defined in enum SENDER_COVERT_STATE
+        \see SENDER_COVERT_STATE
         \see send_controller
      */
     state_t mSenderFSM[] = {
-        { BITSEND, state_bitsend },
-        { ACKWAIT, state_ackwait }
+        { SENDER_COVERT_STATE::INIT   , state_init    },
+        { SENDER_COVERT_STATE::BITSEND, state_bitsend },
+        { SENDER_COVERT_STATE::ACKWAIT, state_ackwait },
+        { SENDER_COVERT_STATE::INT    , state_int     },
+        { SENDER_COVERT_STATE::DIE    , state_die     }
     };
 
     //@}
@@ -75,7 +80,7 @@ namespace
         One thread is responsible for RTP covert channel (used to send data), 
         the other one is for RTP service channel (receive ACK, NAK).
     */
-    void create_new();
+    void new_stream(sip:session_t *s);
 
     //! Sender routine for data channel
     /*!
@@ -93,11 +98,12 @@ namespace
     //! Find free, ready to use sender instance
     sender_context_t* grab_sender();
 
-
-
+    //@{
+    /**   */ 
     void slot_newstream(sip::session_t *session);
     void slot_delstream(sip::session_t *session);
     void slot_reinvite (sip::session_t *session);
+    //@}
 }
 
 void initialize()
@@ -127,6 +133,7 @@ void initialize()
 
         mSenderInstances[i].alive            = true;
         mSenderInstances[i].busy             = false;
+        mSenderInstances[i].interrupt        = false;
         mSenderInstances[i].covertChanQueue  = covertChanQueue;
         mSenderInstances[i].serviceChanQueue = serviceChanQueue;
     }
@@ -176,6 +183,12 @@ void* send_controller(void *pParams)
                 }
                 //FREE_SENDER_INSTANCE(senderCtx);
 
+                if(senderCtx->interrupt)
+                {
+                    APP_LOG("<send_cotroller> interrupted");
+                    senderCtx->state = SENDER_COVERT_STATE::INT;
+                }
+
                 state = &mSenderFSM[senderCtx->state];
                 state->handler(senderCtx);
             }
@@ -188,10 +201,9 @@ void* send_controller(void *pParams)
         }
         else
         {
-            APP_LOG(E_DEBUG, "<send_cotroller> no data");
+            APP_LOG(E_DEBUG, "<send_controller> no data");
         }
     }
-
 }
 
 void* recv_controller(void *pParams)
@@ -201,7 +213,70 @@ void* recv_controller(void *pParams)
     }
 }
 
-void create_new()
+
+////////////////////////////////////////////////////////////////////////////////
+// STATE HANDLERS 
+////////////////////////////////////////////////////////////////////////////////
+
+int state_bitsend(sender_context_t *ctx)
+{
+    return 1;
+}
+
+_______________________________________________________________________________
+int state_ackwait(sender_context_t *ctx)
+{
+    return 1;
+}
+
+_______________________________________________________________________________
+int state_init(sender_context_t *ctx)
+{
+    return 1;
+}
+
+_______________________________________________________________________________
+int state_int(sender_context_t *ctx)
+{
+    return 1;
+}
+
+_______________________________________________________________________________
+int state_die(sender_context_t *ctx)
+{
+    ctx->covertNfo.packets.clear();
+    ctx->covertNfo.state = SENDER_COVERT_STATE::DIE;
+    return 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// SIGNAL HANDLERS 
+////////////////////////////////////////////////////////////////////////////////
+
+void slot_newstream(sip::session_t *session)
+{
+    APP_LOG(E_DEBUG, "<slot_newstream> new stream event");
+    new_stream(session);
+}
+
+_______________________________________________________________________________
+void slot_delstream(sip::session_t *session)
+{
+    APP_LOG(E_DEBUG, "<slot_delstream> del stream event");
+    del_stream(session);
+}
+
+_______________________________________________________________________________
+void slot_reinvite(sip::session_t *session)
+{
+    APP_LOG(E_DEBUG, "<slot_reivinte> reinvite event");
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// HELPERS 
+////////////////////////////////////////////////////////////////////////////////
+
+void new_stream(sip::session *session)
 {
     sender_context_t *freeSenderCtx;
 
@@ -210,15 +285,40 @@ void create_new()
     if(freeSenderCtx)
     {
         // setup initial state
-        freeSenderCtx->state = INIT;
+        freeSenderCtx->covert.packets.clear();
+        freeSenderCtx->covert.state = SENDER_COVERT_STATE::INIT;
     }
     else
     {
-        APP_LOG(E_NOTICE, "<create_new> No free queue to handle stream");
+        APP_LOG(E_NOTICE, "<create_new> no free queue to handle stream");
         return;
     }
 }
 
+_______________________________________________________________________________
+void del_stream(sip::session *session)
+{
+   sender_context_t *sender = find_sender(session);
+   sender->interrupt = true;
+}
+
+_______________________________________________________________________________
+sender_context_t* find_sender(sip::session *sip)
+{
+    const vsconf_value_t *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
+    bool res = false;
+    sender_context_t *sender = NULL;
+
+    for(int i(0); i < streamsCount->value.numval; ++i)
+    {
+        if(sip::cmp_sessions(session, mSenderInstances[i].sipSession))
+        {
+            return &mSenderInstances[i];
+        }
+    }
+} 
+
+_______________________________________________________________________________
 sender_context_t* grab_sender()
 {
     const vsconf_value_t *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
@@ -232,7 +332,8 @@ sender_context_t* grab_sender()
             sender = &mSenderInstances[i];
             LOCK_SENDER_INSTANCE(sender);
             
-                if(sender->busy == false)
+                if(sender->busy == false && 
+                    sender->covertNfo.state == DIE)
                 {
                     sender->busy = true;
                     freeSender = sender;
@@ -242,23 +343,10 @@ sender_context_t* grab_sender()
             FREE_SENDER_INSTANCE(sender);
         }
     }
+
+    return freeSender;
 }
 
-void slot_newstream(sip::session_t *session)
-{
-    APP_LOG(E_DEBUG, "<slot_newstream> New stream event");
-    create_new();
-}
-
-void slot_delstream(sip::session_t *session)
-{
-    APP_LOG(E_DEBUG, "<slot_delstream> New stream event");
-}
-
-void slot_reinvite(sip::session_t *session)
-{
-    APP_LOG(E_DEBUG, "<slot_reivinte> New stream event");
-}
 
 }
 

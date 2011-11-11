@@ -58,7 +58,7 @@ typedef struct sip_common_session {
                    portlocal;
     enum SESSION_STATUS status;
 
-    unsigned int rtpInstanceId;
+    unsigned int rtpModuleIdx;
 } session_t;
 
 //! Handlers tyle definition
