@@ -30,24 +30,37 @@ namespace rtp
     namespace sender
     {
 
-        //! Sender possible states
-        enum SENDER_STATE { 
-	    INIT,    /* initialization                                 */
-            BITSEND, /* seding bit state                               */
-            ACKWAIT  /* sender waits for ACK to arrive on service chan */
-        };
+        //! Covert channel possible states
+        namespace SENDER_COVERT_STATE
+        {
+            enum e { 
+	            INIT,    /* initialization                                 */
+                BITSEND, /* seding bit state                               */
+                ACKWAIT, /* sender waits for ACK to arrive on service chan */
+                INT,     /* sender was interrupted, SIP session ended      */
+                DIE      /* session is over, covert channel ready to reuse */
+            };
+        }
+
+        //! Service channel possible states
+        namespace SENDER_SERVICE_STATE
+        {
+            enum e {
+                INIT,    /* initialization                                 */
+                DIE      /* service channel ready to reuse                 */
+            };
+        }
 
         //! Internal data for controlling covert channel
         typedef rtp_sender_covert_nfo {
-            //! Queued packets
-            std::list<packet_wrapper_t> packets;
-
-            //! Current state
-            SENDER_STATE state;
+            std::list<packet_wrapper_t> packets; /* queued packets      */
+            queue_desc_t covertChanQueue;        /* channel queue info  */
+            SENDER_COVERT_STATE::e state;        /* current state       */
         } sender_covert_nfo_t;
 
         //! Internal data for controlling service channel
         typedef rtp_sender_service_nfo {
+            queue_desc_t serviceChanQueue;       /* channel queue info  */
         } sender_service_nfo_t ;
  
         //! Sender instance description and private data
@@ -62,20 +75,15 @@ namespace rtp
             pthread_mutex_t blockMtx;
 
             //! Sender status indicators
-            bool busy;
+            bool busy;          /*  */
             bool alive;
+            bool interrupt;
             //@}
 
             //@{
             /** Private submodules data */
             sender_covert_nfo_t covertNfo;
             sender_service_nfo_t serviceNfo;
-            //@}
-
-            //@{
-            /** Queues and packets */
-            queue_desc_t covertChanQueue;
-            queue_desc_t serviceChanQueue;
             //@}
         } sender_context_t;
 
