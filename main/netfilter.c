@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include "voipsteg/netfilter.h"
+#include "voipsteg/net.h"
 
 int __netfilter_errorno;
 
@@ -66,6 +67,26 @@ struct nfq_handle* netfilter_init_queue(const char *pszQueue, nfq_callback *cb)
 niq_end:
     pthread_mutex_unlock(&_queueinitMutex);
     return nfq_handle;
+}
+
+//! Creates new netfiler rule
+netfilter_rule_t netfilter_create_rule(unsigned int srcIp, unsigned short srcPort, unsigned int dstIp, unsigned short dstPort, int queueNum, const char* szChain)
+{
+    char szSrcIp[16] = { 0x00, }, 
+         szDstIp[16] = { 0x00, };
+    netfilter_rule_t rule; 
+
+    net_ip2string(srcIp, szSrcIp);
+    net_ip2string(dstIp ,szDstIp);
+
+    sprintf(rule.szSrcPort, "%d", srcPort);
+    sprintf(rule.szDstPort, "%d", dstPort);
+    sprintf(rule.szSrcIp,   "%s", szSrcIp);
+    sprintf(rule.szDstIp,   "%s", szDstIp);
+    sprintf(rule.szQueue,   "%d", queueNum  );
+    strcpy(rule.szChain,    chain);
+
+    return rule;
 }
 
 //! Add new rule to iptables

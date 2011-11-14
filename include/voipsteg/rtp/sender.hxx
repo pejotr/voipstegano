@@ -37,6 +37,7 @@ namespace rtp
                 INIT,    /* initialization                                 */
                 BITSEND, /* seding bit state                               */
                 ACKWAIT, /* sender waits for ACK to arrive on service chan */
+                NOP      /* normal operation                               */
                 INT,     /* sender was interrupted, SIP session ended      */
                 DIE      /* session is over, covert channel ready to reuse */
             };
@@ -47,6 +48,8 @@ namespace rtp
         {
             enum e {
                 INIT,    /* initialization                                 */
+                HALFACK, /* first possib;e packet of ACK                   */
+                ACK,     /* covert trasmission ACK                         */    
                 DIE      /* service channel ready to reuse                 */
             };
         }
