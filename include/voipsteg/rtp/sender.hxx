@@ -34,7 +34,7 @@ namespace rtp
         namespace SENDER_COVERT_STATE
         {
             enum e { 
-	            INIT,    /* initialization                                 */
+                INIT,    /* initialization                                 */
                 BITSEND, /* seding bit state                               */
                 ACKWAIT, /* sender waits for ACK to arrive on service chan */
                 INT,     /* sender was interrupted, SIP session ended      */
