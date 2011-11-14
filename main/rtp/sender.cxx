@@ -38,16 +38,21 @@ namespace
     typedef int (*state_action_t)(sender_context_t *ctx);
 
     //! State definition
-    typedef struct rtp_state_machine {
-        SENDER_COVERT_STATE::e   state;
-        state_action_t handler;
-    } state_t;
+    typedef struct rtp_covert_state {
+        SENDER_COVERT_STATE::e state;
+        state_action_t         handler;
+    } covert_state_t;
+
+    //! State definiotn for service channel
+    typedef struct rtp_service_state {
+        SENDER_SERVICE_STATE::e state;
+    } service_state_t;
 
     //! State handlers
-    int state_bitsend(sender_context_t *ctx);
-    int state_ackwait(sender_context_t *ctx);
-    int state_init   (sender_context_t *ctx);
-    int state_die    (sender_context_t *ctx);
+    int covert_state_bitsend(sender_context_t *ctx);
+    int covert_state_ackwait(sender_context_t *ctx);
+    int covert_state_init   (sender_context_t *ctx);
+    int covert_state_die    (sender_context_t *ctx);
 
     //! Machine definition
     /*!
@@ -56,12 +61,15 @@ namespace
         \see SENDER_COVERT_STATE
         \see send_controller
      */
-    state_t mSenderFSM[] = {
+    covert_state_t mSenderCovertFSM[] = {
         { SENDER_COVERT_STATE::INIT   , state_init    },
         { SENDER_COVERT_STATE::BITSEND, state_bitsend },
         { SENDER_COVERT_STATE::ACKWAIT, state_ackwait },
         { SENDER_COVERT_STATE::INT    , state_int     },
         { SENDER_COVERT_STATE::DIE    , state_die     }
+    };
+
+    service_state_t mSenderServiceFSM[] = {
     };
 
     //@}
@@ -70,8 +78,8 @@ namespace
     sender_context_t *mSenderInstances;
     unsigned int      mFreeSenderInstances;
 
-    void inline LOCK_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_lock(&c->blockMtx);   }
-    void inline FREE_SENDER_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(&c->blockMtx); }
+    void inline LOCK_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_lock(&c->covertNfo.blockMtx);   }
+    void inline FREE_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(&c->covertNfo.blockMtx); }
 
     //! Create new sender instance
     /*!
@@ -88,6 +96,7 @@ namespace
         cannot be used - alive flag is set to false.
 
         \see sender_context_t
+        \see recv_controller
      */
     void* send_controller(void *pParams);
 
@@ -97,6 +106,15 @@ namespace
 
     //! Find free, ready to use sender instance
     sender_context_t* grab_sender();
+
+    //@{
+    //! Operations made just before packet is accepted
+    void handle_covert_packet();
+    void handle_service_packet();
+    //@}
+
+    //! Accept packet
+    void accept_packet();
 
     //@{
     /**   */ 
@@ -150,13 +168,14 @@ void* send_controller(void *pParams)
     struct timeval tv;
     int ret, rv;
     char buf[4096];
-    state_t *state;
+    covert_state_t *state;
     packet_wrapper_t packet;
     sender_context_t *senderCtx = static_cast<sender_context_t*>(pParams);
-    int nfds = senderCtx->covertChanQueue.queuefd;
+    sender_covert_nfo_t *covertNfo = &senderCtx->covertNfo;
+    int nfds = senderCtx->covertNfo.covertChanQueue.queuefd;
 
     FD_ZERO(&rfds);
-    FD_SET(senderCtx->covertChanQueue.queuefd, &rfds);
+    FD_SET(covertNfo.covertChanQueue.queuefd, &rfds);
 
     while(1)
     {
@@ -167,14 +186,14 @@ void* send_controller(void *pParams)
 
         if(ret)
         {
-            if(FD_ISSET(senderCtx->covertChanQueue.queuefd, &rfds))
+            if(FD_ISSET(covertNfo.covertChanQueue.queuefd, &rfds))
             {
                 // TODO: Czy synchronizacja jest potrzebna?
                 //       Czy istnieje inne watki ktore moge chciec modyfikwoac
                 //       dane watku nadawczego ?
 
                 //LOCK_SENDER_INSTANCE(senderCtx);
-                if((rv = recv(senderCtx->covertChanQueue.queuefd, buf, sizeof(buf), MSG_DONTWAIT)) &&
+                if((rv = recv(covertNfo.covertChanQueue.queuefd, buf, sizeof(buf), MSG_DONTWAIT)) &&
                     rv >= 0)
                 {
                     memcpy(packet.buf, buf, rv);
@@ -189,12 +208,13 @@ void* send_controller(void *pParams)
                     senderCtx->state = SENDER_COVERT_STATE::INT;
                 }
 
-                state = &mSenderFSM[senderCtx->state];
+                state = &mSenderCovertFSM[senderCtx->state];
                 state->handler(senderCtx);
             }
         }
         else if(ret == -1)
         {
+            //TODO: oproznic kolejki, zmienic stan na DIE 
             APP_LOG(E_ERROR, "<send_controller> select() error");
             senderCtx->alive = false;
             break;
@@ -206,10 +226,42 @@ void* send_controller(void *pParams)
     }
 }
 
+________________________________________________________________________________
 void* recv_controller(void *pParams)
 {
+    fd_set rfds;
+    struct timeval tv;
+    int ret, rv;
+    service_state_t *state;
+    sender_context_t *senderCtx = static_cast<sender_context_t*>(pParams);
+    sender_service_nfo_t *serviceNfo = senderCtx->serviceNfo;
+    int nfds = serviceNfo.serviceChanQueue.queuefd;
+
     while(1)
     {
+        tv.tv_sec = 2000;
+        tv.tv_usec = 0;
+
+        ret = select(nfds + 1, &rfds, NULL, NULL, &tv);
+
+        if(ret)
+        {
+            if(FD_ISSET(serviceNfo.serviceChanQueue.queuefd, &rfds))
+            {
+            }
+        }
+        else if(ret == -1)
+        {
+            //TODO: oproznic kolejki, zmienic stan na DIE 
+            APP_LOG(E_ERROR, "<recv_controller> select() error");
+            senderCtx->alive = false;
+            break;
+        }
+        else
+        {
+            APP_LOG(E_DEBUG, "<recv_controller> no data");
+        }
+
     }
 }
 
@@ -218,31 +270,31 @@ void* recv_controller(void *pParams)
 // STATE HANDLERS 
 ////////////////////////////////////////////////////////////////////////////////
 
-int state_bitsend(sender_context_t *ctx)
+int covert_state_bitsend(sender_context_t *ctx)
 {
     return 1;
 }
 
 _______________________________________________________________________________
-int state_ackwait(sender_context_t *ctx)
+int covert_state_ackwait(sender_context_t *ctx)
 {
     return 1;
 }
 
 _______________________________________________________________________________
-int state_init(sender_context_t *ctx)
+int covert_state_init(sender_context_t *ctx)
 {
     return 1;
 }
 
 _______________________________________________________________________________
-int state_int(sender_context_t *ctx)
+int covert_state_int(sender_context_t *ctx)
 {
     return 1;
 }
 
 _______________________________________________________________________________
-int state_die(sender_context_t *ctx)
+int covert_state_die(sender_context_t *ctx)
 {
     ctx->covertNfo.packets.clear();
     ctx->covertNfo.state = SENDER_COVERT_STATE::DIE;
@@ -330,7 +382,7 @@ sender_context_t* grab_sender()
         if(mSenderInstances[i].busy == false)
         {        
             sender = &mSenderInstances[i];
-            LOCK_SENDER_INSTANCE(sender);
+            LOCK_COVERT_INSTANCE(sender);
             
                 if(sender->busy == false && 
                     sender->covertNfo.state == DIE)
@@ -340,7 +392,7 @@ sender_context_t* grab_sender()
                     mFreeSenderInstances -= 1;
                 }
 
-            FREE_SENDER_INSTANCE(sender);
+            FREE_COVERT_INSTANCE(sender);
         }
     }
 
