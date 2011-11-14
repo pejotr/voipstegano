@@ -14,6 +14,7 @@ Wykrywanie takiej sytuacji po stronie nadawcy nie jest zadnym sensownym rozwiaza
 * IDEA Rozmiar okna - ilosc bitow ktore nie wymagaja potwierdzenia
 * IDEA Potwierdzenie - powielenie pakietu SEQ parz - OK SEQ nparz - NOK
 
+* IDEA Zlikwidowac select() w {covert, service}_controller, poniewaz mozna to zastapic prostym blokujacym recv()
 * TODO Protokol potwierdzen i powtorzen
 * TODO W dokumentacji opisac ramke SDP, wkleic PELNA z Wiresharka
 

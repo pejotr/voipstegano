@@ -145,7 +145,7 @@ netfilter_rule_t rtp::manager::create_rule(sip::session_t *session)
     netfilter_rule_t rule; 
 
     net_ip2string(session->ipremote, szRemIp);
-    net_ip2string(session->iplocal  , szLocIp);
+    net_ip2string(session->iplocal , szLocIp);
 
     #ifdef SEND 
         sprintf(rule.szSrcPort, "%d", session->portlocal);

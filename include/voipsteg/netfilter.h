@@ -80,6 +80,9 @@ int netfilter_close_queue(int qh);
 //! Translate error number to text message
 const char* netfilter_error_msg(int errornum);
 
+//! Creates structure describing netfilter rule
+netfilter_rule_t netfilter_create_rule(unsigned int srcIp, unsigned short srcPort, unsigned int dstIp, unsigned short dstPort, int queueNum, const char* szChain);
+
 //! Manage iptables rules
 /*!
     This function create an iptables rule from given data stored within netfilter_rule_t 

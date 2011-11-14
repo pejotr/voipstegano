@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <sigc++/sigc++.h>
 
 #include "voipsteg/config.h"
@@ -53,6 +54,7 @@ namespace
     int covert_state_ackwait(sender_context_t *ctx);
     int covert_state_init   (sender_context_t *ctx);
     int covert_state_die    (sender_context_t *ctx);
+    int covert_state_nop    (sender_context_t *ctx);
 
     //! Machine definition
     /*!
@@ -62,11 +64,12 @@ namespace
         \see send_controller
      */
     covert_state_t mSenderCovertFSM[] = {
-        { SENDER_COVERT_STATE::INIT   , state_init    },
-        { SENDER_COVERT_STATE::BITSEND, state_bitsend },
-        { SENDER_COVERT_STATE::ACKWAIT, state_ackwait },
-        { SENDER_COVERT_STATE::INT    , state_int     },
-        { SENDER_COVERT_STATE::DIE    , state_die     }
+        { SENDER_COVERT_STATE::INIT   , covert_state_init    },
+        { SENDER_COVERT_STATE::BITSEND, covert_state_bitsend },
+        { SENDER_COVERT_STATE::ACKWAIT, covert_state_ackwait },
+        { SENDER_COVERT_STATE::NOP    , covert_state_nop     },
+        { SENDER_COVERT_STATE::INT    , covert_state_int     },
+        { SENDER_COVERT_STATE::DIE    , covert_state_die     }
     };
 
     service_state_t mSenderServiceFSM[] = {
@@ -103,18 +106,20 @@ namespace
     //! Sender routine for service channel 
     void* recv_controller(void *pParams);
 
-
     //! Find free, ready to use sender instance
     sender_context_t* grab_sender();
+    
+    //! Find RTP sender context basing on sip session
+    sender_context_t* find_sender(sip::session *sip);
 
     //@{
     //! Operations made just before packet is accepted
-    void handle_covert_packet();
-    void handle_service_packet();
+    void handle_covert_packet(sender_context_t *ctx);
+    void handle_service_packet(sender_context_t *ctx);
     //@}
-
+    
     //! Accept packet
-    void accept_packet();
+    int accept_packet(struct nfq_q_handle *pQh, struct nfgenmsg *pNfmsg, struct nfq_data *pNfa, void *pData);
 
     //@{
     /**   */ 
@@ -138,12 +143,12 @@ void initialize()
     for(int i(0); i < streamsCount->value.numval; ++i)
     {
         covertChanQueue.pNfqHandle = 
-            netfilter_init_queue(covertFrom->value.numval + i,handle_queue);
+            netfilter_init_queue(covertFrom->value.numval + i,accept_packet);
         covertChanQueue.queuefd = nfq_fd(covertChanQueue.pNfqHandle);
         covertChanQueue.queueNum = covertFrom->value.numval + i;
 
         serviceChanQueue.pNfqHandle = 
-            netfilter_init_queue(serviceFrom->value.numval + i,handle_queue);
+            netfilter_init_queue(serviceFrom->value.numval + i,accept_packet);
         serviceChanQueue.queuefd = nfq_fd(serviceChanQueue.pNfqHandle);
         serviceChanQueue.queueNum = serviceFrom->value.numval + i;
 
@@ -272,24 +277,40 @@ void* recv_controller(void *pParams)
 
 int covert_state_bitsend(sender_context_t *ctx)
 {
+    APP_LOG(E_DEBUG, "<covert_chan> state: BITSEND");
+    handle_covert_packet(ctx);
     return 1;
 }
 
 _______________________________________________________________________________
 int covert_state_ackwait(sender_context_t *ctx)
 {
+    APP_LOG(E_DEBUG, "<covert_chan> state: ACKWAIT");
     return 1;
 }
 
 _______________________________________________________________________________
 int covert_state_init(sender_context_t *ctx)
 {
+    APP_LOG(E_DEBUG, "<covert_chan> state: INIT");
     return 1;
 }
 
 _______________________________________________________________________________
 int covert_state_int(sender_context_t *ctx)
 {
+    APP_LOG(E_DEBUG, "<covert_chan> state: INT");
+
+    ctx->covertNfo.packets.clear();
+    ctx->covertNfo.state = SENDER_COVERT_STATE::DIE;
+
+    return 1;
+}
+
+_______________________________________________________________________________
+int covert_state_nop(sender_context_t *ctx)
+{
+    APP_LOG(E_DEBUG, "<covert_chan> state: NOP");
     return 1;
 }
 
@@ -336,7 +357,6 @@ void new_stream(sip::session *session)
 
     if(freeSenderCtx)
     {
-        // setup initial state
         freeSenderCtx->covert.packets.clear();
         freeSenderCtx->covert.state = SENDER_COVERT_STATE::INIT;
     }
@@ -399,6 +419,37 @@ sender_context_t* grab_sender()
     return freeSender;
 }
 
+_______________________________________________________________________________
+void handle_covert_packet(sender_context_t *ctx)
+{
+    assert(ctx->covertNfo.packets.size() != 0);
+
+    packet_wrapper_t p = ctx->covertNfo.packets.front();
+
+    nfq_handle_packet(ctx->covertNfo.covertChanQueue.pNfqHandle, 
+        packet.buffer, packet.rv);
+    ctx->covertNfo.packets.pop_front();
+}
+
+_______________________________________________________________________________
+void handle_service_packet(sender_context_t *ctx)
+{
+}
+
+_______________________________________________________________________________
+int accept_packet(struct nfq_q_handle *pQh, struct nfgenmsg *pNfmsg, 
+    struct nfq_data *pNfa, void *pData);
+{
+    struct nfqnl_msg_packet_hdr *ph;
+    int id;
+
+    ph = nfq_get_msg_packet_hdr(pNfa);
+    if(ph) {
+        id = ntohl(ph->packet_id);
+    }
+
+    return nfq_set_verdict(pQh, id, NF_ACCEPT, 0, NULL);
+}
 
 }
 
