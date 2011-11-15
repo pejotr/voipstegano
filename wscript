@@ -5,7 +5,7 @@ top = '.'
 out = 'build'
 
 def options(opt):
-    opt.load('compiler_cxx')
+    opt.tool_options('compiler_cxx')
 
 def configure(cnf):
     cnf.check_tool('compiler_cxx')
@@ -14,7 +14,7 @@ def configure(cnf):
     cnf.setenv('sender', env = cnf.env.derive())
     cnf.load('compiler_cxx')
     cnf.define("MODULE_SENDER", 1)
-    cnf.write_config_header("sender/config.h", remove=False)
+    cnf.write_config_header("config.h")
 
     cnf.setenv('receiver', env = cnf.env.derive())
     cnf.load('compiler_cxx')
@@ -24,6 +24,8 @@ def configure(cnf):
 
 def build(bld):    
     voipsteg_inc = bld.path.abspath() + "/include"
+
+    print(bld.env) 
 
     bld.env.includes = [
         voipsteg_inc, 
@@ -54,6 +56,7 @@ def build(bld):
             "libxml2"
         ]
     )
+
 
 def init(ctx):
     from waflib.Build import BuildContext, CleanContext, InstallContext, UninstallContext

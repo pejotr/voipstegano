@@ -105,7 +105,7 @@ void* main_routine(void *pParam)
     mReqMessageHandler.insert( std::make_pair(PJSIP_ACK_METHOD   , ack   ) ); 
     mReqMessageHandler.insert( std::make_pair(PJSIP_BYE_METHOD   , bye   ) );
 
-    pNfqHandle = netfilter_init_queue(conf->pszQueue, inout::handle_queue);
+    pNfqHandle = netfilter_init_queue(atoi(conf->pszQueue), inout::handle_queue);
     fd = nfq_fd(pNfqHandle);
 
     delete conf;
