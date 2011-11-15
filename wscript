@@ -26,6 +26,7 @@ def build(bld):
     voipsteg_inc = bld.path.abspath() + "/include"
 
     bld.env.includes = [
+        ".",
         voipsteg_inc, 
         "/usr/local/include", 
         "/usr/include/libxml2", 
