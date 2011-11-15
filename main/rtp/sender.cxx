@@ -414,7 +414,15 @@ sender_context_t* grab_sender()
         if(mSenderInstances[i].busy == false)
         {        
             sender = &mSenderInstances[i];
-            LOCK_COVERT_INSTANCE(sender);
+
+            // TODO: Czy potrzebna synchronizacja? Funkcja uruchamiana tylko
+            //       w przypadku tworzenia nowego strumienia. Nawet jesli 
+            //       bedzie wykonywana jednoczesnie z modyfikacja stanu przez
+            //       watek nadajacy to nic sie nie moze stac - pole busy
+            //       sprawdzane jest tylko przez ten 1 watek w tym jednym
+            //       miejscu
+
+            //LOCK_COVERT_INSTANCE(sender);
             
                 if(sender->busy == false && 
                     sender->covertNfo.state == SENDER_COVERT_STATE::DIE)
@@ -424,7 +432,7 @@ sender_context_t* grab_sender()
                     mFreeSenderInstances -= 1;
                 }
 
-            FREE_COVERT_INSTANCE(sender);
+            //FREE_COVERT_INSTANCE(sender);
         }
     }
 
