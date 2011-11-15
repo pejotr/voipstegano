@@ -16,14 +16,14 @@ static const char error_msg[6][255] = {
 static int             _mutexinitialized;
 static pthread_mutex_t _queueinitMutex;
 
-struct nfq_handle* netfilter_init_queue(const char *pszQueue, nfq_callback *cb)
+struct nfq_handle* netfilter_init_queue(int queueNum, nfq_callback *cb)
 {
     int queuenum, portnum;
     struct nfq_handle *nfq_handle;
     struct nfq_q_handle *queue_handle;
     struct nfln_handle *netlink_handle;
 
-    queuenum = atoi(pszQueue);
+    queuenum = queueNum;
     __netfilter_errorno = 0;
 
     if( !_mutexinitialized )
@@ -70,7 +70,11 @@ niq_end:
 }
 
 //! Creates new netfiler rule
-netfilter_rule_t netfilter_create_rule(unsigned int srcIp, unsigned short srcPort, unsigned int dstIp, unsigned short dstPort, int queueNum, const char* szChain)
+netfilter_rule_t netfilter_create_rule(unsigned int srcIp, 
+                                       unsigned short srcPort, 
+                                       unsigned int dstIp, 
+                                       unsigned short dstPort, int queueNum, 
+                                       const char* szChain)
 {
     char szSrcIp[16] = { 0x00, }, 
          szDstIp[16] = { 0x00, };
@@ -84,7 +88,7 @@ netfilter_rule_t netfilter_create_rule(unsigned int srcIp, unsigned short srcPor
     sprintf(rule.szSrcIp,   "%s", szSrcIp);
     sprintf(rule.szDstIp,   "%s", szDstIp);
     sprintf(rule.szQueue,   "%d", queueNum  );
-    strcpy(rule.szChain,    chain);
+    strcpy(rule.szChain,    szChain);
 
     return rule;
 }

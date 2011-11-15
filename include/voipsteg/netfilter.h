@@ -69,7 +69,7 @@ typedef struct
 //! Initialize new queue
 /*!
  */
-struct nfq_handle* netfilter_init_queue(const char *pszQueue, nfq_callback *cb);
+struct nfq_handle* netfilter_init_queue(int queueNum, nfq_callback *cb);
 
 //! Close opened queue
 /*!
@@ -81,7 +81,11 @@ int netfilter_close_queue(int qh);
 const char* netfilter_error_msg(int errornum);
 
 //! Creates structure describing netfilter rule
-netfilter_rule_t netfilter_create_rule(unsigned int srcIp, unsigned short srcPort, unsigned int dstIp, unsigned short dstPort, int queueNum, const char* szChain);
+netfilter_rule_t netfilter_create_rule(unsigned int srcIp, 
+                                       unsigned short srcPort, 
+                                       unsigned int dstIp, 
+                                       unsigned short dstPort, int queueNum,
+                                       const char* szChain);
 
 //! Manage iptables rules
 /*!

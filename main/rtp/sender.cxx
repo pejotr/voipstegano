@@ -49,12 +49,13 @@ namespace
         SENDER_SERVICE_STATE::e state;
     } service_state_t;
 
-    //! State handlers
+    //! State handlers    
+    int covert_state_init   (sender_context_t *ctx);
     int covert_state_bitsend(sender_context_t *ctx);
     int covert_state_ackwait(sender_context_t *ctx);
-    int covert_state_init   (sender_context_t *ctx);
-    int covert_state_die    (sender_context_t *ctx);
     int covert_state_nop    (sender_context_t *ctx);
+    int covert_state_int    (sender_context_t *ctx);
+    int covert_state_die    (sender_context_t *ctx);
 
     //! Machine definition
     /*!
@@ -81,8 +82,8 @@ namespace
     sender_context_t *mSenderInstances;
     unsigned int      mFreeSenderInstances;
 
-    void inline LOCK_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_lock(&c->covertNfo.blockMtx);   }
-    void inline FREE_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(&c->covertNfo.blockMtx); }
+    void inline LOCK_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_lock(&c->blockMtx);   }
+    void inline FREE_COVERT_INSTANCE(sender_context_t *c) { pthread_mutex_unlock(&c->blockMtx); }
 
     //! Create new sender instance
     /*!
@@ -91,7 +92,7 @@ namespace
         One thread is responsible for RTP covert channel (used to send data), 
         the other one is for RTP service channel (receive ACK, NAK).
     */
-    void new_stream(sip:session_t *s);
+    void new_stream(sip::session_t *s);
 
     //! Sender routine for data channel
     /*!
@@ -110,7 +111,7 @@ namespace
     sender_context_t* grab_sender();
     
     //! Find RTP sender context basing on sip session
-    sender_context_t* find_sender(sip::session *sip);
+    sender_context_t* find_sender(sip::session_t *sip);
 
     //@{
     //! Operations made just before packet is accepted
@@ -127,6 +128,9 @@ namespace
     void slot_delstream(sip::session_t *session);
     void slot_reinvite (sip::session_t *session);
     //@}
+
+    void new_stream(sip::session_t *session);
+    void del_stream(sip::session_t *session);
 }
 
 void initialize()
@@ -157,8 +161,8 @@ void initialize()
         mSenderInstances[i].alive            = true;
         mSenderInstances[i].busy             = false;
         mSenderInstances[i].interrupt        = false;
-        mSenderInstances[i].covertChanQueue  = covertChanQueue;
-        mSenderInstances[i].serviceChanQueue = serviceChanQueue;
+        mSenderInstances[i].covertNfo.covertChanQueue   = covertChanQueue;
+        mSenderInstances[i].serviceNfo.serviceChanQueue = serviceChanQueue;
     }
 
     sip::inout::sig_init.connect( sigc::ptr_fun(slot_newstream) );
@@ -180,7 +184,7 @@ void* send_controller(void *pParams)
     int nfds = senderCtx->covertNfo.covertChanQueue.queuefd;
 
     FD_ZERO(&rfds);
-    FD_SET(covertNfo.covertChanQueue.queuefd, &rfds);
+    FD_SET(covertNfo->covertChanQueue.queuefd, &rfds);
 
     while(1)
     {
@@ -191,29 +195,29 @@ void* send_controller(void *pParams)
 
         if(ret)
         {
-            if(FD_ISSET(covertNfo.covertChanQueue.queuefd, &rfds))
+            if(FD_ISSET(covertNfo->covertChanQueue.queuefd, &rfds))
             {
                 // TODO: Czy synchronizacja jest potrzebna?
                 //       Czy istnieje inne watki ktore moge chciec modyfikwoac
                 //       dane watku nadawczego ?
 
                 //LOCK_SENDER_INSTANCE(senderCtx);
-                if((rv = recv(covertNfo.covertChanQueue.queuefd, buf, sizeof(buf), MSG_DONTWAIT)) &&
+                if((rv = recv(covertNfo->covertChanQueue.queuefd, buf, sizeof(buf), MSG_DONTWAIT)) &&
                     rv >= 0)
                 {
                     memcpy(packet.buf, buf, rv);
                     packet.rv = rv;
-                    senderCtx->packets.push_back(packet);
+                    covertNfo->packets.push_back(packet);
                 }
                 //FREE_SENDER_INSTANCE(senderCtx);
 
                 if(senderCtx->interrupt)
                 {
-                    APP_LOG("<send_cotroller> interrupted");
-                    senderCtx->state = SENDER_COVERT_STATE::INT;
+                    APP_LOG(E_DEBUG, "<send_cotroller> interrupted");
+                    senderCtx->covertNfo.state = SENDER_COVERT_STATE::INT;
                 }
 
-                state = &mSenderCovertFSM[senderCtx->state];
+                state = &mSenderCovertFSM[senderCtx->covertNfo.state];
                 state->handler(senderCtx);
             }
         }
@@ -231,7 +235,7 @@ void* send_controller(void *pParams)
     }
 }
 
-________________________________________________________________________________
+//______________________________________________________________________________
 void* recv_controller(void *pParams)
 {
     fd_set rfds;
@@ -239,8 +243,8 @@ void* recv_controller(void *pParams)
     int ret, rv;
     service_state_t *state;
     sender_context_t *senderCtx = static_cast<sender_context_t*>(pParams);
-    sender_service_nfo_t *serviceNfo = senderCtx->serviceNfo;
-    int nfds = serviceNfo.serviceChanQueue.queuefd;
+    sender_service_nfo_t *serviceNfo = &senderCtx->serviceNfo;
+    int nfds = serviceNfo->serviceChanQueue.queuefd;
 
     while(1)
     {
@@ -251,7 +255,7 @@ void* recv_controller(void *pParams)
 
         if(ret)
         {
-            if(FD_ISSET(serviceNfo.serviceChanQueue.queuefd, &rfds))
+            if(FD_ISSET(serviceNfo->serviceChanQueue.queuefd, &rfds))
             {
             }
         }
@@ -282,21 +286,21 @@ int covert_state_bitsend(sender_context_t *ctx)
     return 1;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int covert_state_ackwait(sender_context_t *ctx)
 {
     APP_LOG(E_DEBUG, "<covert_chan> state: ACKWAIT");
     return 1;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int covert_state_init(sender_context_t *ctx)
 {
     APP_LOG(E_DEBUG, "<covert_chan> state: INIT");
     return 1;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int covert_state_int(sender_context_t *ctx)
 {
     APP_LOG(E_DEBUG, "<covert_chan> state: INT");
@@ -307,14 +311,14 @@ int covert_state_int(sender_context_t *ctx)
     return 1;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int covert_state_nop(sender_context_t *ctx)
 {
     APP_LOG(E_DEBUG, "<covert_chan> state: NOP");
     return 1;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int covert_state_die(sender_context_t *ctx)
 {
     ctx->covertNfo.packets.clear();
@@ -332,14 +336,14 @@ void slot_newstream(sip::session_t *session)
     new_stream(session);
 }
 
-_______________________________________________________________________________
+//_______________________________________________________________________________
 void slot_delstream(sip::session_t *session)
 {
     APP_LOG(E_DEBUG, "<slot_delstream> del stream event");
     del_stream(session);
 }
 
-_______________________________________________________________________________
+//_______________________________________________________________________________
 void slot_reinvite(sip::session_t *session)
 {
     APP_LOG(E_DEBUG, "<slot_reivinte> reinvite event");
@@ -349,16 +353,24 @@ void slot_reinvite(sip::session_t *session)
 // HELPERS 
 ////////////////////////////////////////////////////////////////////////////////
 
-void new_stream(sip::session *session)
+void new_stream(sip::session_t *session)
 {
+    netfilter_rule_t rule;
     sender_context_t *freeSenderCtx;
 
     freeSenderCtx = grab_sender();
 
     if(freeSenderCtx)
     {
-        freeSenderCtx->covert.packets.clear();
-        freeSenderCtx->covert.state = SENDER_COVERT_STATE::INIT;
+        freeSenderCtx->covertNfo.packets.clear();
+        freeSenderCtx->sip = session;
+        freeSenderCtx->covertNfo.state = SENDER_COVERT_STATE::INIT;
+
+        rule = netfilter_create_rule(session->iplocal, session->portlocal,
+                                     session->ipremote, session->portremote,
+                                     freeSenderCtx->covertNfo.covertChanQueue.queueNum);
+        netfilter_manage_rule(&rule, ADD);
+
     }
     else
     {
@@ -367,15 +379,15 @@ void new_stream(sip::session *session)
     }
 }
 
-_______________________________________________________________________________
-void del_stream(sip::session *session)
+//______________________________________________________________________________
+void del_stream(sip::session_t *session)
 {
    sender_context_t *sender = find_sender(session);
    sender->interrupt = true;
 }
 
-_______________________________________________________________________________
-sender_context_t* find_sender(sip::session *sip)
+//______________________________________________________________________________
+sender_context_t* find_sender(sip::session_t *sip)
 {
     const vsconf_value_t *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
     bool res = false;
@@ -383,14 +395,14 @@ sender_context_t* find_sender(sip::session *sip)
 
     for(int i(0); i < streamsCount->value.numval; ++i)
     {
-        if(sip::cmp_sessions(session, mSenderInstances[i].sipSession))
+        if(sip::cmp_sessions(sip, mSenderInstances[i].sip))
         {
             return &mSenderInstances[i];
         }
     }
 } 
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 sender_context_t* grab_sender()
 {
     const vsconf_value_t *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
@@ -405,7 +417,7 @@ sender_context_t* grab_sender()
             LOCK_COVERT_INSTANCE(sender);
             
                 if(sender->busy == false && 
-                    sender->covertNfo.state == DIE)
+                    sender->covertNfo.state == SENDER_COVERT_STATE::DIE)
                 {
                     sender->busy = true;
                     freeSender = sender;
@@ -419,26 +431,25 @@ sender_context_t* grab_sender()
     return freeSender;
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 void handle_covert_packet(sender_context_t *ctx)
 {
     assert(ctx->covertNfo.packets.size() != 0);
 
     packet_wrapper_t p = ctx->covertNfo.packets.front();
 
-    nfq_handle_packet(ctx->covertNfo.covertChanQueue.pNfqHandle, 
-        packet.buffer, packet.rv);
+    nfq_handle_packet(ctx->covertNfo.covertChanQueue.pNfqHandle, p.buf, p.rv);
     ctx->covertNfo.packets.pop_front();
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 void handle_service_packet(sender_context_t *ctx)
 {
 }
 
-_______________________________________________________________________________
+//______________________________________________________________________________
 int accept_packet(struct nfq_q_handle *pQh, struct nfgenmsg *pNfmsg, 
-    struct nfq_data *pNfa, void *pData);
+    struct nfq_data *pNfa, void *pData)
 {
     struct nfqnl_msg_packet_hdr *ph;
     int id;

@@ -23,6 +23,7 @@
 
 #include "voipsteg/netfilter.h"
 #include "voipsteg/net.h"
+#include "voipsteg/sip/common.hxx"
 
 namespace rtp
 {
@@ -37,7 +38,7 @@ namespace rtp
                 INIT,    /* initialization                                 */
                 BITSEND, /* seding bit state                               */
                 ACKWAIT, /* sender waits for ACK to arrive on service chan */
-                NOP      /* normal operation                               */
+                NOP,     /* normal operation                               */
                 INT,     /* sender was interrupted, SIP session ended      */
                 DIE      /* session is over, covert channel ready to reuse */
             };
@@ -55,14 +56,14 @@ namespace rtp
         }
 
         //! Internal data for controlling covert channel
-        typedef rtp_sender_covert_nfo {
+        typedef struct rtp_sender_covert_nfo {
             std::list<packet_wrapper_t> packets; /* queued packets      */
             queue_desc_t covertChanQueue;        /* channel queue info  */
             SENDER_COVERT_STATE::e state;        /* current state       */
         } sender_covert_nfo_t;
 
         //! Internal data for controlling service channel
-        typedef rtp_sender_service_nfo {
+        typedef struct rtp_sender_service_nfo {
             queue_desc_t serviceChanQueue;       /* channel queue info  */
         } sender_service_nfo_t ;
  
@@ -82,6 +83,8 @@ namespace rtp
             bool alive;
             bool interrupt;
             //@}
+
+            sip::session_t* sip;
 
             //@{
             /** Private submodules data */
