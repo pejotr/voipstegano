@@ -49,12 +49,11 @@ void* sip::init(void *pParams)
     void *status;
     pthread_t thread_send, thread_recv;
     const vsconf_value_t *sipqueuea = vsconf_get("sip-queuenum-a"),
-                         *sipqueueb = vsconf_get("sip-queuenum-b"), 
-                         *sipporta  = vsconf_get("sip-port-a"), 
-                         *sipportb  = vsconf_get("sip-port-b"),
-                         *queueup   = vsconf_get("queue-upnum"),
-                         *queuelo   = vsconf_get("queue-lonum");
-    int queueCnt = queueup->value.numval - queuelo->value.numval;
+        *sipqueueb = vsconf_get("sip-queuenum-b"),
+        *sipporta  = vsconf_get("sip-port-a"),
+        *sipportb  = vsconf_get("sip-port-b"),
+        *streamsCount = vsconf_get(RTP_STREAMS_COUNT);
+    int queueCnt = streamsCount->value.numval;
 
     module_conf_t *config_send = new module_conf_t,
                   *config_recv = new module_conf_t;
