@@ -13,8 +13,9 @@ def configure(cnf):
 
     cnf.setenv('sender', env = cnf.env.derive())
     cnf.load('compiler_cxx')
+    cnf.env.CXXFLAGS = ['-g3', '-gdwarf-2']
     cnf.define("MODULE_SENDER", 1)
-    cnf.write_config_header("config.h")
+    cnf.write_config_header("sender/config.h")
 
     cnf.setenv('receiver', env = cnf.env.derive())
     cnf.load('compiler_cxx')

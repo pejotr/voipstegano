@@ -38,8 +38,9 @@ int vsconf_readconfig(const char *filename)
     }
 
     if( (doc = xmlParseFile(filename)) == NULL ) {
-        SYS_LOG(E_ERROR, "Nie mozna odczytac pliku %s", filename)
-        return -1;
+        SYS_LOG(E_ERROR, "Unable to read config file: %s", filename)
+        exit(-1);
+	return -1;
     }
 
     if( (cur = xmlDocGetRootElement(doc)) == NULL ) {

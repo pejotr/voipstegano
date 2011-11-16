@@ -368,7 +368,8 @@ void new_stream(sip::session_t *session)
 
         rule = netfilter_create_rule(session->iplocal, session->portlocal,
                                      session->ipremote, session->portremote,
-                                     freeSenderCtx->covertNfo.covertChanQueue.queueNum);
+                                     freeSenderCtx->covertNfo.covertChanQueue.queueNum,
+				     NF_CHAIN_OUTPUT);
         netfilter_manage_rule(&rule, ADD);
 
     }
