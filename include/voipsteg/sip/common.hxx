@@ -65,7 +65,7 @@ typedef int (*msg_handler_func)(session_t *session,struct pjsip_msg *pSipMsg, co
 
 //! Configuration structure for "in" and "out" submodules
 typedef struct {
-    const char *pszQueue;
+    int queueNum;
     const char *pszPort;
     QUEUE_DIRECTION dirInd;
 } module_conf_t;

@@ -84,7 +84,7 @@ void* main_routine(void *pParam)
     module_conf_t   *conf = static_cast<module_conf_t*>(pParam);
     pthread_t       me    = pthread_self();
     
-    SYS_LOG(E_NOTICE, "Starting sip::inout thread. Queue number is %s and port is %s", conf->pszQueue, conf->pszPort);    
+    SYS_LOG(E_NOTICE, "Starting sip::inout thread. Queue number is %d and port is %s", conf->queueNum, conf->pszPort);    
 
     status = pj_thread_register("in-thread", desc, &this_thread);
 
@@ -105,7 +105,7 @@ void* main_routine(void *pParam)
     mReqMessageHandler.insert( std::make_pair(PJSIP_ACK_METHOD   , ack   ) ); 
     mReqMessageHandler.insert( std::make_pair(PJSIP_BYE_METHOD   , bye   ) );
 
-    pNfqHandle = netfilter_init_queue(atoi(conf->pszQueue), inout::handle_queue);
+    pNfqHandle = netfilter_init_queue(conf->queueNum, inout::handle_queue);
     fd = nfq_fd(pNfqHandle);
 
     delete conf;

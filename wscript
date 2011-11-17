@@ -25,9 +25,6 @@ def configure(cnf):
 
 def build(bld):    
     voipsteg_inc = bld.path.abspath() + "/include"
-
-    print(bld.env) 
-
     bld.env.includes = [
         ".",
         voipsteg_inc, 

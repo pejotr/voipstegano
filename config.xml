@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<sip-queuenum-a>0</sip-queuenum-a>
+	<sip-queuenum-b>1</sip-queuenum-b>
+	<sip-port-a>5060</sip-port-a>
+	<sip-port-b>5060</sip-port-b>
+	
+	<rtp-covert-from>5</rtp-covert-from>
+	<rtp-service-from>7</rtp-service-from>
+	<stream-count>1</stream-count>
+
+	<sender>sip:pdoniec@sip.elka.pw.edu.pl</sender>
+	<filename>test.txt</filename>
+	<dstfile>rec.txt</dstfile>
+	<d0>10000</d0>
+	<d1>30000</d1>
+	<delta>2500</delta>
+</config>

@@ -25,6 +25,7 @@ vsconf_node_t config[] = {
 const int CONFIG_ELEMENTS = sizeof(config)/sizeof(vsconf_node_t);
 
 static int configRead = 0;
+static void conf_check_file();
 
 int vsconf_readconfig(const char *filename)
 {
@@ -68,6 +69,9 @@ int vsconf_readconfig(const char *filename)
             }
         }
     }
+
+    conf_check_file();
+
     configRead = 1;
     return 1;
 }
@@ -99,4 +103,16 @@ int vsconf_findentry__(const xmlChar* xmlName)
 
     SYS_LOG(E_DEBUG, "Nie znany klucz \"%s\" w pliku xml", (unsigned char*)xmlName);
     return -1;
+}
+
+static void conf_check_file()
+{
+    int ii;
+
+    for(ii = 0; ii < CONFIG_ELEMENTS; ii++) {
+        if( config[ii].val.isvalid == false ) {
+            SYS_LOG(E_ERROR, "Value for \"%s\" was not found in configuration file", config[ii].name);
+        }
+    }
+
 }

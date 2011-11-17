@@ -68,11 +68,11 @@ void* sip::init(void *pParams)
 
     if( sipqueuea && sipqueueb && sipporta && sipportb )
     {
-        config_send->pszQueue = sipqueuea->value.strval;
+        config_send->queueNum = sipqueuea->value.numval;
         config_send->pszPort  = sipporta->value.strval;
         config_send->dirInd   = OUTGOING_PACKETS;
 
-        config_recv->pszQueue = sipqueueb->value.strval;
+        config_recv->queueNum = sipqueueb->value.numval;
         config_recv->pszPort  = sipportb->value.strval;
         config_recv->dirInd   = INCOMMING_PACKETS;
 
