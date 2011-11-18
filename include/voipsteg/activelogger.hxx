@@ -35,7 +35,7 @@ namespace activelogger {
 
     //! Event information used by logger to create log message
     typedef struct activelogger_message {	
-	enum LOG_LEVEL level;
+	LOG_LEVEL      level;
 	std::string    module,
 	               message,
 	               file;

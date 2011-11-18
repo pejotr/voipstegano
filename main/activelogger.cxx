@@ -46,6 +46,7 @@ pthread_cond_t  mQueueNotEmpty;
 //@}
 
 volatile bool   mRun;
+volatile bool   mStarted;
 
 //! Main logger loop
 /*!
@@ -61,6 +62,7 @@ pthread_t* exe()
 {
     int res;
 
+    mStarted = false;
     pthread_mutex_init(&mQueueSync, NULL);
     res = pthread_create(&mThread, NULL, main_loop, NULL);
 
@@ -71,6 +73,8 @@ pthread_t* exe()
 	fprintf(stderr, " -------------------------------------\n");
 	exit(-1);
     }
+
+    while(!mStarted);
 
     return &mThread;
 }
@@ -107,6 +111,7 @@ void put(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...)
     message.file    = file;
     message.line    = lineno;
     message.time    = clock();
+    message.level   = lev;
 
     pthread_mutex_lock(&mQueueSync);
         mMessageQueue.push_back(message);
@@ -124,6 +129,7 @@ namespace {
 
 	SYS_LOG(E_NOTICE, "<logger> logger started");
 
+	mStarted = true;
 	while(mRun) 
 	{
 	    pthread_mutex_lock(&mQueueSync);

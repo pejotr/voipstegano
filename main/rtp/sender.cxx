@@ -138,7 +138,6 @@ pthread_t* exe()
     int rc;
     pthread_t* rtpThrd = new pthread_t();
 
-    APP_LOG(E_ERROR, "AAA Unable to start RTP module thread");
     rc = pthread_create(rtpThrd, NULL, initialize, NULL);
 
     if(rc)
