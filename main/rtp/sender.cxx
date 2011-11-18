@@ -133,7 +133,24 @@ namespace
     void del_stream(sip::session_t *session);
 }
 
-void initialize()
+pthread_t* exe()
+{
+    int rc;
+    pthread_t* rtpThrd = new pthread_t();
+
+    APP_LOG(E_ERROR, "AAA Unable to start RTP module thread");
+    rc = pthread_create(rtpThrd, NULL, initialize, NULL);
+
+    if(rc)
+    {
+        APP_LOG(E_ERROR, "Unable to start RTP module thread");
+        return NULL;
+    }
+
+    return rtpThrd;
+}
+
+void* initialize(void*)
 {
     const vsconf_value_t *covertFrom = vsconf_get(RTP_COVERT_FROM),
         *serviceFrom = vsconf_get(RTP_SERVICE_FROM),
@@ -143,6 +160,8 @@ void initialize()
 
     mSenderInstances = new sender_context_t[streamsCount->value.numval];
     mFreeSenderInstances = streamsCount->value.numval;
+
+    APP_LOG(E_DEBUG, "<initialize> creating RTP sender thread");
 
     for(int i(0); i < streamsCount->value.numval; ++i)
     {
@@ -163,6 +182,12 @@ void initialize()
         mSenderInstances[i].interrupt        = false;
         mSenderInstances[i].covertNfo.covertChanQueue   = covertChanQueue;
         mSenderInstances[i].serviceNfo.serviceChanQueue = serviceChanQueue;
+       
+	// Starting threads 
+	pthread_create(&mSenderInstances[i].covertChanThrd, 
+                       NULL, 
+		       send_controller, 
+                       static_cast<void*>(&mSenderInstances[i]));
     }
 
     sip::inout::sig_init.connect( sigc::ptr_fun(slot_newstream) );

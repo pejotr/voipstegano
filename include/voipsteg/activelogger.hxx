@@ -50,7 +50,7 @@ namespace activelogger {
 	done in separated thread, the main routines are not weight down 
 	by additional operations. Simplified implmentation of ActiveObject.
     */
-    pthread_t* init(void* pParams);
+    pthread_t* exe();
 
     //! Creates and register activelogger for submodule
     activelogger_t* create_logger(const std::string& modulename);

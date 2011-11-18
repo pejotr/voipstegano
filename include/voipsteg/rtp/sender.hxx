@@ -94,7 +94,10 @@ namespace rtp
         } sender_context_t;
 
         //! Initialize sender module
-        void initialize();
+        void* initialize(void*);
+
+	//! Launch RTP module
+	pthread_t* exe();
 
     } /* namespace sender  */
 } /* namespace rtp  */

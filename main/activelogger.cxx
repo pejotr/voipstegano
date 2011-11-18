@@ -57,7 +57,7 @@ void* main_loop(void* pParams);
 
 } // namespace
 
-pthread_t* init(void* pParams)
+pthread_t* exe()
 {
     int res;
 
@@ -111,6 +111,7 @@ void put(LOG_LEVEL lev, int lineno, const char *file, const char *format, ...)
     pthread_mutex_lock(&mQueueSync);
         mMessageQueue.push_back(message);
     pthread_mutex_unlock(&mQueueSync);
+    pthread_cond_signal(&mQueueNotEmpty);
 }
 
 namespace {
@@ -119,6 +120,9 @@ namespace {
     {
 	message_t msg;
 	double milis;
+	mRun = true;
+
+	SYS_LOG(E_NOTICE, "<logger> logger started");
 
 	while(mRun) 
 	{

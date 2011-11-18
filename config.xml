@@ -7,7 +7,7 @@
 	
 	<rtp-covert-from>5</rtp-covert-from>
 	<rtp-service-from>7</rtp-service-from>
-	<stream-count>1</stream-count>
+	<streams-count>1</streams-count>
 
 	<sender>sip:pdoniec@sip.elka.pw.edu.pl</sender>
 	<filename>test.txt</filename>

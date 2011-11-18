@@ -9,7 +9,8 @@
 #include "voipsteg/config.h"
 #include "voipsteg/databank.h"
 #include "voipsteg/sip/common.hxx"
-#include "voipsteg/rtp/rtp.hxx"
+#include "voipsteg/rtp/sender.hxx"
+#include "voipsteg/activelogger.hxx"
  
 void
 signal_callback_handler(int signum)
@@ -27,11 +28,14 @@ signal_callback_handler(int signum)
 int main()
 {
     int ret; 
-    pthread_t sip, rtp;
+    pthread_t sip;
+    pthread_t *rtpThrd, *activeLoggerThrd;
     void *status;
 
     signal(SIGINT, signal_callback_handler);
     vsconf_readconfig("config.xml");
+
+    activeLoggerThrd = activelogger::exe();
 
 #ifdef MODULE_SENDER
     db_init_data();
@@ -41,6 +45,9 @@ int main()
     SYS_LOG(E_NOTICE, "Starting SENDER");
     system("iptables -A INPUT -p udp --sport 5060 -j NFQUEUE --queue-num 1");
     netfilter_manage_rule(&sipOut, ADD);
+
+    rtpThrd = rtp::sender::exe();
+
 #else
     SYS_LOG(E_NOTICE, "Starting REVEIVER");
 
@@ -56,7 +63,8 @@ int main()
 //    pthread_create(&rtp, NULL, rtp::init, NULL);
     sip::init(NULL);   
 
-//    pthread_join(rtp, &status); 
+    pthread_join(*rtpThrd, &status);
+    pthread_join(*activeLoggerThrd, &status);
 
 
     return EXIT_SUCCESS;

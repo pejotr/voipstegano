@@ -1,4 +1,7 @@
+#include <pthread.h>
 #include "voipsteg/logger.h"
+
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 
 int log_level__;
 
@@ -24,7 +27,8 @@ void vslog_set_level(int l)
 
 void vslog_log(LOG_LEVEL lev, int lineno, const char *file, double milis, const char *format, ...) 
 {
-    
+    pthread_mutex_lock(&mut);
+
     vslog_levelnfo_t levelnfo;
     char msg[256]; 
     char temp[512], colorized[512], loc[128];
@@ -45,4 +49,5 @@ void vslog_log(LOG_LEVEL lev, int lineno, const char *file, double milis, const 
     vsutils_term_printcolor(colorized, (const char*)temp, levelnfo.color, COLOR_BLACK, sizeof(colorized)/sizeof(char));
 
     printf("%s\n", colorized);
+    pthread_mutex_unlock(&mut);
 }
